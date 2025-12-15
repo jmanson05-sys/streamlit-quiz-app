@@ -250,20 +250,18 @@ if page == "Quiz":
                 disabled=builder_disabled
             )
         
-        if st.button("Start quiz", type="primary", disabled=qz["active"]):
-            import random
-
+    if st.button("Start quiz", type="primary", disabled=qz["active"]):
+        import random
+        
         if quiz_mode.startswith("🎯"):
             pool = build_adaptive_pool(bank, stats)
         else:
             pool = build_standard_pool(bank, cat, topic, status)
-        
-        # 🚧 HARD GUARD — no blank screen
+            
         if len(pool) == 0:
-            st.warning("No questions match your filters. Try changing category, topic, or status.")
-            qz["active"] = False
+            st.warning("No questions match your filters.")
             st.stop()
-        
+            
         random.shuffle(pool)
         pool = pool[:n]
         
@@ -275,7 +273,6 @@ if page == "Quiz":
         qz["choice_order"] = {}
         
         st.rerun()
-
 
     qz = st.session_state.quiz
 
@@ -291,85 +288,65 @@ if page == "Quiz":
                 qz["active"] = False
                 st.rerun()
         
-        
         else:
             if idx >= len(qz["pool"]):
                 qz["active"] = False
                 st.rerun()
 
-            q = qz["pool"][idx]
-            qid = q["qid"]
+           with main_col:
+    # =========================
+    # QUESTION STEM
+    # =========================
+    st.markdown(
+        f"""
+        <div style="
+            background-color: white;
+            padding: 28px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        ">
+            <strong>Question {idx + 1}</strong><br><br>
+            {q["question"]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-            answered = qid in stats["user_answers"]
-            user_answer = stats["user_answers"].get(qid)
-            correct_answer = q["answer"]
-            
-            with main_col:
-            # =========================
-            # QUESTION + ANSWERS
-            # =========================
+    # =========================
+    # ANSWERS
+    # =========================
+    if qid not in qz["choice_order"]:
+        import random
+        opts = q["choices"].copy()
+        random.shuffle(opts)
+        qz["choice_order"][qid] = opts
 
-            st.markdown(
-                f"""
-                <div style="
-                    background-color: white;
-                    padding: 28px;
-                    border-radius: 10px;
-                    border: 1px solid #e0e0e0;
-                    font-size: 18px;
-                    line-height: 1.6;
-                    margin-bottom: 24px;
-                ">
-                    <strong>Question {idx + 1}</strong><br><br>
-                    {q["question"]}
-                </div>
-                """,
-                unsafe_allow_html=True
+    if not answered:
+        sel = st.radio(
+            "",
+            qz["choice_order"][qid],
+            index=None,
+            label_visibility="collapsed"
+        )
+
+        if st.button("Submit Answer", type="primary", disabled=sel is None):
+            stats["user_answers"][qid] = sel
+            stats["attempts"].append(
+                {
+                    "qid": qid,
+                    "correct": sel == correct_answer,
+                    "ts": datetime.utcnow().isoformat(),
+                }
             )
-            
-            # (answers go here — your existing radio / UWORLD block)
+            save_stats(stats)
 
-            with side_col:
-                st.markdown("### Progress")
-                st.progress((idx + 1) / total)
-                st.caption(f"Question {idx + 1} of {total}")
-                st.caption(f"Score: {qz['score']}")
-
-                flagged = qid in stats["flagged"]
-                if st.button("🚩 Flag Question"):
-                    if flagged:
-                        stats["flagged"].remove(qid)
-                    else:
-                        stats["flagged"].append(qid)
-                    save_stats(stats)
-                    st.rerun()
-
-            # =========================
-            # LEFT PANEL (Question)
-            # =========================
-            with main_col:
-                
-                # =========================
-                # QUESTION STEM
-                # =========================
-                st.markdown(
-                    f"""
-                    <div style="
-                        background-color: white;
-                        padding: 28px;
-                        border-radius: 10px;
-                        border: 1px solid #e0e0e0;
-                        font-size: 18px;
-                        line-height: 1.6;
-                        margin-bottom: 24px;
-                    ">
-                        <strong>Question {idx + 1}</strong><br><br>
-                        {q["question"]}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
+            if sel == correct_answer:
+                qz["score"] += 1
+            qz["show_expl"] = True
+            st.rerun()
 
                 # =========================
                 # ANSWER STATE
@@ -469,7 +446,7 @@ if page == "Quiz":
                         unsafe_allow_html=True
                     )
 
-            with right:
+            with side_col:
                 if qz["show_expl"] and st.button("Next Question ➡️"):
                     qz["index"] += 1
                     qz["show_expl"] = False
