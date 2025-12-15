@@ -358,7 +358,8 @@ if not answered:
 # AFTER SUBMIT (UWORLD STYLE)
 # -------------------------
 else:
-    for opt in qz["choice_order"][qid]:
+    for i, opt in enumerate(qz["choice_order"][qid]):
+        label = chr(65 + i)  # A, B, C, D
         if opt == correct_answer:
             bg = "#e8f5e9"      # green
             border = "#2e7d32"
@@ -379,7 +380,7 @@ else:
                 background-color: {bg};
                 font-size: 16px;
             ">
-                {opt}
+                <strong>{label}.</strong> {opt}
             </div>
             """,
             unsafe_allow_html=True
@@ -412,6 +413,7 @@ if qz["show_expl"]:
                     qz["index"] += 1
                     qz["show_expl"] = False
                     st.rerun()
+                    qz["choice_order"].pop(qid, None)
 
 # =========================================================
 # REVIEW
