@@ -24,10 +24,18 @@ st.markdown(
     <style>
     /* 1. Base Styles (Clean, Professional Look) */
     .stApp {
-        background-color: #f0f2f6; /* Very light gray background */
+        background-color: #f0f2f6; /* Very light gray background (App Frame) */
         color: #000000; /* PURE BLACK for maximum readability */
     }
 
+    /* --- FIX: Force Main Content Background to White --- */
+    /* This targets the container holding the primary content */
+    .st-emotion-cache-18ni294 { /* Specific Streamlit class for the main content block */
+        background-color: #ffffff !important;
+        padding: 30px; /* Add padding similar to the containers for spacing */
+        border-radius: 10px;
+    }
+    
     /* --- FIX: Force ALL Text and Headers to be Black --- */
     h1, h2, h3, h4, h5, h6, 
     [data-testid*="stHeader"], /* Targets Streamlit's hidden header elements */
@@ -120,7 +128,7 @@ st.markdown(
     .explanation-incorrect {
         background: #ffebee; /* Light Red for incorrect */
     }
-    /* Tighter container padding */
+    /* Tighter container padding (overrides Streamlit default) */
     .block-container { 
         padding-top: 1.5rem; 
     }
