@@ -102,15 +102,6 @@ def status_of(q):
         if stats["user_answers"][qid] == q["answer"]
         else "Incorrect"
     )
-def status_of(q):
-    qid = q["qid"]
-    if qid not in stats["user_answers"]:
-        return "Unanswered"
-    return (
-        "Correct"
-        if stats["user_answers"][qid] == q["answer"]
-        else "Incorrect"
-    )
 
 # =========================================================
 # LOAD DATA
@@ -313,15 +304,15 @@ if page == "Quiz":
 # -------------------------
 # Answer state helpers
 # -------------------------
-answered = qid in stats["user_answers"]
-user_answer = stats["user_answers"].get(qid)
-correct_answer = q["answer"]
+            answered = qid in stats["user_answers"]
+            user_answer = stats["user_answers"].get(qid)
+            correct_answer = q["answer"]
 
 # -------------------------
 # Shuffle choices once
 # -------------------------
-if qid not in qz["choice_order"]:
-    import random
+            if qid not in qz["choice_order"]:
+                import random
     opts = q["choices"].copy()
     random.shuffle(opts)
     qz["choice_order"][qid] = opts
@@ -329,7 +320,7 @@ if qid not in qz["choice_order"]:
 # -------------------------
 # BEFORE SUBMIT (radio)
 # -------------------------
-if not answered:
+            if not answered:
     sel = st.radio(
         "",
         qz["choice_order"][qid],
@@ -357,7 +348,7 @@ if not answered:
 # -------------------------
 # AFTER SUBMIT (UWORLD STYLE)
 # -------------------------
-else:
+            else:
     for i, opt in enumerate(qz["choice_order"][qid]):
         label = chr(65 + i)  # A, B, C, D
         if opt == correct_answer:
