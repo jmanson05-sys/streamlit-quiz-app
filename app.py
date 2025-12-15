@@ -241,6 +241,7 @@ if page == "Quiz":
         qz["choice_order"] = {}
         
         st.rerun()
+        st.stop()
 
 
     qz = st.session_state.quiz
