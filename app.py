@@ -223,9 +223,6 @@ if page == "Quiz":
         else:
             pool = build_standard_pool(bank, cat, topic, status)
 
-        random.shuffle(pool)
-        pool = pool[:n]
-
         qz["active"] = True
         qz["pool"] = pool
         qz["index"] = 0
