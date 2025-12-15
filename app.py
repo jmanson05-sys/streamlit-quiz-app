@@ -202,9 +202,12 @@ if page == "Quiz":
         topic = st.selectbox("Topic", ["All"] + topics, disabled=builder_disabled)
 
     with c3:
-        status = st.selectbox(
-            "Status", ["All", "Correct", "Incorrect", "Unanswered"], disabled=builder_disabled
-        )
+    status = st.selectbox(
+        "Status",
+        ["All", "Correct", "Incorrect", "Unanswered"],
+        index=0,  # 👈 DEFAULT TO "All"
+        disabled=builder_disabled
+    )
 
     with c4:
         n = st.number_input(
@@ -215,22 +218,29 @@ if page == "Quiz":
             disabled=builder_disabled
         )
 
-    if st.button("Start quiz", type="primary", disabled=qz["active"]):
-        import random
+  if st.button("Start quiz", type="primary", disabled=qz["active"]):
+    import random
 
-        if quiz_mode.startswith("🎯"):
-            pool = build_adaptive_pool(bank, stats)
-        else:
-            pool = build_standard_pool(bank, cat, topic, status)
+    if quiz_mode.startswith("🎯"):
+        pool = build_adaptive_pool(bank, stats)
+    else:
+        pool = build_standard_pool(bank, cat, topic, status)
 
-        qz["active"] = True
-        qz["pool"] = pool
-        qz["index"] = 0
-        qz["score"] = 0
-        qz["show_expl"] = False
-        qz["choice_order"] = {}
+    if not pool:
+        st.warning("No questions match your filters. Try changing category, topic, or status.")
+        return
 
-        st.rerun()
+    random.shuffle(pool)
+    pool = pool[:n]
+
+    qz["active"] = True
+    qz["pool"] = pool
+    qz["index"] = 0
+    qz["score"] = 0
+    qz["show_expl"] = False
+    qz["choice_order"] = {}
+
+    st.rerun()
 
     qz = st.session_state.quiz
 
