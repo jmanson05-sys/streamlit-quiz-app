@@ -130,14 +130,16 @@ page = st.sidebar.radio(
 # =========================================================
 if page == "Quiz":
     st.subheader("Quiz Builder")
-quiz_mode = st.radio(
-    "Quiz mode",
-    ["Standard", "🎯 Adaptive (Weak Areas)"],
-    horizontal=True
-)
+
+    quiz_mode = st.radio(
+        "Quiz mode",
+        ["Standard", "🎯 Adaptive (Weak Areas)"],
+        horizontal=True
+    )
 
     categories = sorted({q.get("category", "") for q in bank})
     topics = sorted({q.get("topic", "") for q in bank})
+
 
     with st.expander("Build quiz", expanded=not st.session_state.quiz["active"]):
         c1, c2, c3, c4 = st.columns(4)
