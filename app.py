@@ -228,14 +228,15 @@ if page == "Quiz":
             pool = build_adaptive_pool(bank, stats)
         else:
             pool = build_standard_pool(bank, cat, topic, status)
-            
-        if not pool:
+        
+        # 🚧 HARD GUARD — no blank screen
+        if len(pool) == 0:
             st.warning("No questions match your filters. Try changing category, topic, or status.")
             st.stop()
-
+        
         random.shuffle(pool)
-        pool = pool[: min(n, len(pool))]
-
+        pool = pool[:n]
+        
         qz["active"] = True
         qz["pool"] = pool
         qz["index"] = 0
@@ -244,6 +245,7 @@ if page == "Quiz":
         qz["choice_order"] = {}
         
         st.rerun()
+
 
     qz = st.session_state.quiz
 
