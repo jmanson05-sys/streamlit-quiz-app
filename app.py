@@ -225,7 +225,7 @@ if "quiz" not in st.session_state:
 # =========================================================
 # UI
 # =========================================================
-st.title("📘 Question Bank & Quiz System")
+st.title("📘 STS QBank")
 
 page = st.sidebar.radio(
     "Navigate",
@@ -234,6 +234,10 @@ page = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 st.sidebar.caption(f"Questions in Bank: {len(bank)}")
+
+# --- DEBUG LINE ADDED ---
+print(f"Current page selected: {page}") 
+# ------------------------
 
 # =========================================================
 # QUIZ
