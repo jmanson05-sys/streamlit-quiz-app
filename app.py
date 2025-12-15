@@ -93,6 +93,24 @@ def embed_pdf(path):
     </iframe>
     """
     st.components.v1.html(html, height=520)
+def status_of(q):
+    qid = q["qid"]
+    if qid not in stats["user_answers"]:
+        return "Unanswered"
+    return (
+        "Correct"
+        if stats["user_answers"][qid] == q["answer"]
+        else "Incorrect"
+    )
+def status_of(q):
+    qid = q["qid"]
+    if qid not in stats["user_answers"]:
+        return "Unanswered"
+    return (
+        "Correct"
+        if stats["user_answers"][qid] == q["answer"]
+        else "Incorrect"
+    )
 
 # =========================================================
 # LOAD DATA
