@@ -187,7 +187,7 @@ if page == "Quiz":
     qz = st.session_state.quiz
 
     if not qz["active"]:
-    st.info("Build a quiz and click Start.")
+        st.info("Build a quiz and click Start.")
     else:
         idx = qz["index"]
         total = len(qz["pool"])
