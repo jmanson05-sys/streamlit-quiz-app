@@ -202,12 +202,12 @@ if page == "Quiz":
         topic = st.selectbox("Topic", ["All"] + topics, disabled=builder_disabled)
 
     with c3:
-    status = st.selectbox(
-        "Status",
-        ["All", "Correct", "Incorrect", "Unanswered"],
-        index=0,  # 👈 DEFAULT TO "All"
-        disabled=builder_disabled
-    )
+        status = st.selectbox(
+            "Status",
+            ["All", "Correct", "Incorrect", "Unanswered"],
+            index=0,  # 👈 DEFAULT TO "All"
+            disabled=builder_disabled
+        )
 
     with c4:
         n = st.number_input(
