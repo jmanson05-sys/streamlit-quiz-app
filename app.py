@@ -142,7 +142,7 @@ st.title("📘 Question Bank & Quiz System")
 
 page = st.sidebar.radio(
     "Navigate",
-    ["Quiz", "Review", "Admin", "Analytics", "Import / Export"]
+    ["Quiz", "Review", "Admin", "Analytics", "Import / Export"], key="nav_radio"
 )
 
 # =========================================================
@@ -239,7 +239,6 @@ if page == "Quiz":
         # 🚧 HARD GUARD — no blank screen
         if len(pool) == 0:
             st.warning("No questions match your filters. Try changing category, topic, or status.")
-            st.stop()
         
         random.shuffle(pool)
         pool = pool[:n]
@@ -252,7 +251,6 @@ if page == "Quiz":
         qz["choice_order"] = {}
         
         st.rerun()
-        st.stop()
 
 
     qz = st.session_state.quiz
@@ -838,7 +836,6 @@ if page == "Quiz":
         # 🚧 HARD GUARD — no blank screen
         if len(pool) == 0:
             st.warning("No questions match your filters. Try changing category, topic, or status.")
-            st.stop()
         
         random.shuffle(pool)
         pool = pool[:n]
@@ -849,13 +846,15 @@ if page == "Quiz":
         qz["score"] = 0
         qz["show_expl"] = False
         qz["choice_order"] = {}
-        
-        st.rerun()
-        st.stop()
 
 
     qz = st.session_state.quiz
+    
+    if qz["active"] and not qz["pool"]:
+        st.error("Quiz has no questions. Please rebuild the quiz.")
+        qz["active"] = False
 
+    
     if not qz["active"]:
         st.info("Build a quiz and click Start.")
     else:
