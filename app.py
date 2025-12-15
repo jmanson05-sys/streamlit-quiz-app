@@ -218,7 +218,7 @@ if page == "Quiz":
         qz["pool"] = pool
         qz["index"] = 0
         qz["score"] = 0
-        qz[show_expl"] = False
+        qz["show_expl"] = False
         qz["choice_order"] = {}
 
         st.rerun()
