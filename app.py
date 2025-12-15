@@ -536,7 +536,6 @@ if page == "Quiz":
             qz["index"] += 1
             qz["show_expl"] = False
             # We don't pop choice_order here, as we may want to review later
-            st.rerun()
 
 # =========================================================
 # REVIEW
@@ -676,7 +675,6 @@ elif page == "Admin":
             if st.button("Save Changes", type="primary"):
                 save_bank(bank)
                 st.success("Changes saved successfully to the question bank.")
-    st.stop()
 # =========================================================
 # ANALYTICS (CONTAINER WRAPPER ADDED)
 # =========================================================
@@ -723,7 +721,6 @@ elif page == "Analytics":
             # Pivot for display
             pivot_df = category_performance.pivot(index='Category', columns='Status', values='Percentage').fillna(0)
             st.dataframe(pivot_df.style.format("{:.1f}%"), use_container_width=True)
-    st.stop()
 # =========================================================
 # IMPORT / EXPORT (UPDATED)
 # =========================================================
@@ -851,4 +848,3 @@ elif page == "Import / Export":
                 )
             else:
                 st.info("No quiz attempts yet.")
-    st.stop()
