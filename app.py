@@ -202,8 +202,10 @@ if page == "Quiz":
             "Number of questions",
             min_value=1,
             max_value=max(1, len(bank)),
-            value=min(10, max(1, len(bank))), disabled=builder_disabled)
+            value=min(10, max(1, len(bank))),
+            disabled=builder_disabled
         )
+
     if st.button("Start quiz", type="primary", disabled=qz["active"]):
         import random
 
