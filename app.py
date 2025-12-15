@@ -282,7 +282,7 @@ if page == "Quiz":
             # =========================
             # LEFT PANEL (Question)
             # =========================
-           with left:
+with left:
     # =========================
     # QUESTION STEM
     # =========================
@@ -402,6 +402,7 @@ if page == "Quiz":
             """,
             unsafe_allow_html=True
         )
+
               
 
             with right:
