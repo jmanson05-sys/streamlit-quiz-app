@@ -140,127 +140,48 @@ if page == "Quiz":
     categories = sorted({q.get("category", "") for q in bank})
     topics = sorted({q.get("topic", "") for q in bank})
 
+    c1, c2, c3, c4 = st.columns(4)
 
-    with st.expander("Build quiz", expanded=not st.session_state.quiz["active"]):
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            cat = st.selectbox("Category", ["All"] + categories)
-        with c2:
-            topic = st.selectbox("Topic", ["All"] + topics)
-        with c3:
-            status = st.selectbox(
-                "Status", ["All", "Correct", "Incorrect", "Unanswered"]
-            )
-        with c4:
-            n = st.number_input(
-                "Number of questions",
-                min_value=1,
-                max_value=max(1, len(bank)),
-                value=min(10, max(1, len(bank))),
-            )
+    with c1:
+        cat = st.selectbox("Category", ["All"] + categories)
 
-        def status_of(q):
-            qid = q["qid"]
-            if qid not in stats["user_answers"]:
-                return "Unanswered"
-            return (
-                "Correct"
-                if stats["user_answers"][qid] == q["answer"]
-                else "Incorrect"
-            )
+    with c2:
+        topic = st.selectbox("Topic", ["All"] + topics)
 
-def build_standard_pool():
-    p = []
-    for q in bank:
-        if cat != "All" and q.get("category") != cat:
-            continue
-        if topic != "All" and q.get("topic") != topic:
-            continue
-        if status != "All" and status_of(q) != status:
-            continue
-        p.append(q)
-    return p
+    with c3:
+        status = st.selectbox(
+            "Status", ["All", "Correct", "Incorrect", "Unanswered"]
+        )
 
+    with c4:
+        n = st.number_input(
+            "Number of questions",
+            min_value=1,
+            max_value=max(1, len(bank)),
+            value=min(10, max(1, len(bank))),
+        )
 
-def build_adaptive_pool():
-    incorrect = []
-    flagged = []
-    unanswered = []
-    rest = []
+    if st.button("Start quiz", type="primary"):
+        import random
 
-    for q in bank:
-        qid = q["qid"]
-
-        if qid in stats["user_answers"]:
-            if stats["user_answers"][qid] != q["answer"]:
-                incorrect.append(q)
-            else:
-                rest.append(q)
+        if quiz_mode.startswith("🎯"):
+            pool = build_adaptive_pool()
         else:
-            unanswered.append(q)
+            pool = build_standard_pool()
 
-        if qid in stats["flagged"]:
-            flagged.append(q)
+        random.shuffle(pool)
+        pool = pool[:n]
 
-    pool = []
-    pool.extend(incorrect)
-    pool.extend([q for q in flagged if q not in pool])
-    pool.extend([q for q in unanswered if q not in pool])
-    pool.extend([q for q in rest if q not in pool])
+        st.session_state.quiz = {
+            "active": True,
+            "pool": pool,
+            "index": 0,
+            "score": 0,
+            "show_expl": False,
+            "choice_order": {},
+        }
+        st.rerun()
 
-    return pool
-
-
-def build_adaptive_pool():
-    incorrect = []
-    flagged = []
-    unanswered = []
-    rest = []
-
-    for q in bank:
-        qid = q["qid"]
-        if qid in stats["user_answers"]:
-            if stats["user_answers"][qid] != q["answer"]:
-                incorrect.append(q)
-            else:
-                rest.append(q)
-        else:
-            unanswered.append(q)
-
-        if qid in stats["flagged"]:
-            flagged.append(q)
-
-    # Priority order
-    pool = []
-    pool.extend(incorrect)
-    pool.extend([q for q in flagged if q not in pool])
-    pool.extend([q for q in unanswered if q not in pool])
-    pool.extend([q for q in rest if q not in pool])
-
-    return pool
-
-
-pool = (
-    build_adaptive_pool()
-    if quiz_mode.startswith("🎯")
-    else build_standard_pool()
-)
-
-
-        if st.button("Start quiz", type="primary"):
-            import random
-
-            random.shuffle(pool)
-            pool = pool[:n]
-            st.session_state.quiz = {
-                "active": True,
-                "pool": pool,
-                "index": 0,
-                "score": 0,
-                "show_expl": False,
-                "choice_order": {},
-            }
-            st.rerun()
 
     qz = st.session_state.quiz
 
