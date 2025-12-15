@@ -612,4 +612,242 @@ elif page == "Review":
                     st.markdown(
                         f"""
                         <div class="feedback-box-default {box_class}" style="margin-bottom:5px;">
-                            **{label}.** {c}
+                            **{label}.** {c} {feedback}
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                # Explanation
+                explanation_class = "explanation-correct" if is_correct else "explanation-incorrect"
+                st.markdown("#### Explanation")
+                st.markdown(
+                    f"""
+                    <div class="explanation-box {explanation_class}">
+                        {q.get("explanation", "No explanation provided.")}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+# =========================================================
+# ADMIN (CONTAINER WRAPPER ADDED)
+# =========================================================
+elif page == "Admin":
+    # --- ADDED CONTAINER HERE ---
+    with st.container(border=True):
+        st.subheader("Admin Editor")
+
+        if not bank:
+            st.info("No questions yet. Import some data on the 'Import / Export' page.")
+        else:
+            # Create a dictionary for selection with a cleaner label
+            labels = {
+                f"Q{q['id_num']} — {q['question'][:50]}...": q for q in bank
+            }
+            label = st.selectbox("Select question to edit", list(labels))
+            q = labels[label]
+
+            st.caption(f"Editing QID: {q['qid']}")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                q["category"] = st.text_input("Category", q.get("category", ""))
+            with col2:
+                q["topic"] = st.text_input("Topic", q.get("topic", ""))
+
+            q["question"] = st.text_area("Question", q["question"], height=150)
+            
+            # Helper function for editing choices
+            choices_text = st.text_area(
+                "Choices (one option per line)", 
+                "\n".join(q["choices"]), 
+                height=150
+            )
+            q["choices"] = [line for line in choices_text.splitlines() if line.strip()] # Filter out empty lines
+            
+            q["answer"] = st.text_input(
+                "Correct answer (Must match one of the choices exactly)", 
+                q["answer"]
+            )
+            q["explanation"] = st.text_area(
+                "Explanation", 
+                q.get("explanation", ""),
+                height=200
+            )
+            # Add attachment logic here if needed, but for now, just the save button
+            if st.button("Save Changes", type="primary"):
+                save_bank(bank)
+                st.success("Changes saved successfully to the question bank.")
+# =========================================================
+# ANALYTICS (CONTAINER WRAPPER ADDED)
+# =========================================================
+elif page == "Analytics":
+    # --- ADDED CONTAINER HERE ---
+    with st.container(border=True):
+        st.subheader("Analytics")
+
+        if not bank:
+            st.info("No data available.")
+        else:
+            rows = []
+            for q in bank:
+                qid = q["qid"]
+                status = status_of(q) # Re-use the helper function
+                
+                rows.append(
+                    {
+                        "ID": q["id_num"],
+                        "Category": q.get("category", ""),
+                        "Topic": q.get("topic", ""),
+                        "Status": status,
+                        "Flagged": qid in stats["flagged"],
+                    }
+                )
+
+            df_analytics = pd.DataFrame(rows)
+            st.dataframe(df_analytics, use_container_width=True)
+            
+            # Summary Charts
+            st.markdown("### Summary")
+            
+            # Pie chart for Status
+            status_counts = df_analytics['Status'].value_counts().reset_index()
+            status_counts.columns = ['Status', 'Count']
+            st.bar_chart(status_counts, x='Status', y='Count')
+            
+            st.markdown("### Performance by Category")
+            
+            # Group by Category and get status counts
+            category_performance = df_analytics.groupby('Category')['Status'].value_counts(normalize=True).mul(100).rename('Percentage').reset_index()
+            category_performance = category_performance[category_performance['Status'] != 'Unanswered'] # Filter out unanswered for cleaner perf view
+
+            # Pivot for display
+            pivot_df = category_performance.pivot(index='Category', columns='Status', values='Percentage').fillna(0)
+            st.dataframe(pivot_df.style.format("{:.1f}%"), use_container_width=True)
+# =========================================================
+# IMPORT / EXPORT (UPDATED)
+# =========================================================
+elif page == "Import / Export":
+    # 1. Use a container to ensure a clean, isolated background for this section
+    with st.container(border=True):
+        st.subheader("Import / Export")
+
+        # =========================
+        # IMPORT
+        # =========================
+        st.markdown("### 📥 Import from Excel")
+        st.info("Excel columns needed: **question**, **choice1**, **choice2** (up to choiceN), **answer**, **explanation**, **category**, **topic**")
+
+        upload = st.file_uploader("Upload .xlsx", type=["xlsx"])
+        if upload:
+            try:
+                df = pd.read_excel(upload)
+                st.dataframe(df.head())
+
+                if st.button("Import Questions", type="primary"):
+                    questions_imported = 0
+                    for _, r in df.iterrows():
+                        # Extract any column starting with 'choice'
+                        choices = [
+                            str(r[c])
+                            for c in df.columns
+                            if str(c).lower().startswith("choice")
+                            and pd.notna(r[c])
+                        ]
+                        
+                        # Basic Validation
+                        if not r.get("question") or not r.get("answer"):
+                            continue
+                        
+                        questions_imported += 1
+                        bank.append({
+                            "qid": uuid.uuid4().hex[:10],
+                            "id_num": len(bank) + 1,
+                            "category": str(r.get("category", "")),
+                            "topic": str(r.get("topic", "")),
+                            "question": str(r.get("question", "")),
+                            "choices": choices,
+                            "answer": str(r.get("answer", "")),
+                            "explanation": str(r.get("explanation", "")),
+                            "attachments": [],
+                        })
+
+                    save_bank(bank)
+                    st.success(f"Imported **{questions_imported}** questions successfully!")
+                    st.balloons()
+            except Exception as e:
+                st.error(f"Error reading file: {e}")
+
+        # =========================
+        # EXPORT DATA
+        # =========================
+        st.markdown("---")
+        st.markdown("### 📥 Export Data")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if bank:
+                qb_rows = []
+                for q in bank:
+                    row = {
+                        "id": q["id_num"],
+                        "category": q.get("category", ""),
+                        "topic": q.get("topic", ""),
+                        "question": q["question"],
+                        "answer": q["answer"],
+                        "explanation": q.get("explanation", ""),
+                    }
+                    for i, c in enumerate(q["choices"], start=1):
+                        row[f"choice{i}"] = c
+                    qb_rows.append(row)
+
+                qb_df = pd.DataFrame(qb_rows)
+                
+                st.download_button(
+                    label="📘 Download Question Bank (Excel)",
+                    data=to_excel_bytes(qb_df),
+                    file_name="question_bank_backup.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            else:
+                st.info("No questions to export.")
+
+        with col2:
+            if stats["attempts"]:
+                results_df = pd.DataFrame(stats["attempts"])
+
+                # 1. Create a clean mapping dictionary for all necessary details
+                qid_to_details = {}
+                for q in bank:
+                    qid_to_details[q['qid']] = {
+                        "id_num": q.get("id_num", "N/A"),
+                        "category": q.get('category', 'N/A'),
+                        "topic": q.get('topic', 'N/A')
+                    }
+                
+                # 2. Apply mapping robustly, ensuring default 'N/A' if QID is missing
+                results_df["question_id"] = results_df["qid"].apply(
+                    lambda x: qid_to_details.get(x, {}).get("id_num", "N/A")
+                )
+                results_df['Category'] = results_df['qid'].apply(
+                    lambda x: qid_to_details.get(x, {}).get("category", "N/A")
+                )
+                results_df['Topic'] = results_df['qid'].apply(
+                    lambda x: qid_to_details.get(x, {}).get("topic", "N/A")
+                )
+
+                # Reorder columns for better readability in Excel
+                final_columns = [
+                    'question_id', 'Category', 'Topic', 'correct', 'ts', 'qid'
+                ]
+                results_df = results_df.reindex(columns=final_columns)
+
+                st.download_button(
+                    label="📊 Download Quiz Results (Excel)",
+                    data=to_excel_bytes(results_df),
+                    file_name="quiz_results_backup.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            else:
+                st.info("No quiz attempts yet.")
