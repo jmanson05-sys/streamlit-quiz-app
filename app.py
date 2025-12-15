@@ -128,6 +128,47 @@ page = st.sidebar.radio(
 # =========================================================
 # QUIZ
 # =========================================================
+def build_standard_pool():
+    p = []
+    for q in bank:
+        if cat != "All" and q.get("category") != cat:
+            continue
+        if topic != "All" and q.get("topic") != topic:
+            continue
+        if status != "All" and status_of(q) != status:
+            continue
+        p.append(q)
+    return p
+
+
+def build_adaptive_pool():
+    incorrect = []
+    flagged = []
+    unanswered = []
+    rest = []
+
+    for q in bank:
+        qid = q["qid"]
+
+        if qid in stats["user_answers"]:
+            if stats["user_answers"][qid] != q["answer"]:
+                incorrect.append(q)
+            else:
+                rest.append(q)
+        else:
+            unanswered.append(q)
+
+        if qid in stats["flagged"]:
+            flagged.append(q)
+
+    pool = []
+    pool.extend(incorrect)
+    pool.extend([q for q in flagged if q not in pool])
+    pool.extend([q for q in unanswered if q not in pool])
+    pool.extend([q for q in rest if q not in pool])
+
+    return pool
+
 if page == "Quiz":
     st.subheader("Quiz Builder")
     qz = st.session_state.quiz
