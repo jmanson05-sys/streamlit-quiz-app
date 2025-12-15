@@ -130,6 +130,7 @@ page = st.sidebar.radio(
 # =========================================================
 if page == "Quiz":
     st.subheader("Quiz Builder")
+    qz = st.session_state.quiz
 
     quiz_mode = st.radio(
         "Quiz mode",
@@ -185,7 +186,7 @@ if page == "Quiz":
 
     qz = st.session_state.quiz
 
-    if not qz["active"]:
+        if not qz["active"]:
         st.info("Build a quiz and click Start.")
     else:
         idx = qz["index"]
@@ -199,129 +200,102 @@ if page == "Quiz":
         else:
             q = qz["pool"][idx]
             qid = q["qid"]
-left, right = st.columns([3, 1])
 
-            st.progress(idx / total)
-            st.metric("Progress", f"{idx+1}/{total}")
-            st.metric("Score", qz["score"])
+            left, right = st.columns([3, 1])
 
-            st.markdown(f"### Q{q['id_num']}")
-            with left:
-    st.markdown(
-        f"""
-        <div style="
-            background-color: white;
-            padding: 24px;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            font-size: 18px;
-            line-height: 1.6;
-            margin-bottom: 16px;
-        ">
-            <strong>Question {qz['index'] + 1}</strong><br><br>
-            {q["question"]}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-
+            # =========================
+            # RIGHT PANEL (Progress)
+            # =========================
             with right:
-    st.markdown("### Progress")
-    st.progress((qz["index"] + 1) / len(qz["pool"]))
-    st.caption(f"Question {qz['index'] + 1} of {len(qz['pool'])}")
+                st.markdown("### Progress")
+                st.progress((idx + 1) / total)
+                st.caption(f"Question {idx + 1} of {total}")
+                st.caption(f"Score: {qz['score']}")
 
-    flagged = qid in stats["flagged"]
-    if st.button("🚩 Flag Question"):
-        if flagged:
-            stats["flagged"].remove(qid)
-        else:
-            stats["flagged"].append(qid)
-        save_stats(stats)
-        st.rerun()
+                flagged = qid in stats["flagged"]
+                if st.button("🚩 Flag Question"):
+                    if flagged:
+                        stats["flagged"].remove(qid)
+                    else:
+                        stats["flagged"].append(qid)
+                    save_stats(stats)
+                    st.rerun()
 
-            if qid not in qz["choice_order"]:
-                import random
+            # =========================
+            # LEFT PANEL (Question)
+            # =========================
+            with left:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color: white;
+                        padding: 24px;
+                        border-radius: 8px;
+                        border: 1px solid #e0e0e0;
+                        font-size: 18px;
+                        line-height: 1.6;
+                        margin-bottom: 16px;
+                    ">
+                        <strong>Question {idx + 1}</strong><br><br>
+                        {q["question"]}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-                opts = q["choices"].copy()
-                random.shuffle(opts)
-                qz["choice_order"][qid] = opts
+                if qid not in qz["choice_order"]:
+                    import random
+                    opts = q["choices"].copy()
+                    random.shuffle(opts)
+                    qz["choice_order"][qid] = opts
 
-          # =========================
-# ANSWER CHOICES
-# =========================
-with left:
-    sel = st.radio(
-        "",
-        qz["choice_order"][qid],
-        index=None,
-        label_visibility="collapsed"
-    )
+                sel = st.radio(
+                    "",
+                    qz["choice_order"][qid],
+                    index=None,
+                    label_visibility="collapsed"
+                )
 
-# =========================
-# SUBMIT ANSWER
-# =========================
-with left:
-    if st.button("Submit Answer", type="primary", disabled=sel is None):
-        correct = sel == q["answer"]
-        stats["user_answers"][qid] = sel
-        stats["attempts"].append(
-            {
-                "qid": qid,
-                "correct": correct,
-                "ts": datetime.utcnow().isoformat(),
-            }
-        )
-        save_stats(stats)
-        if correct:
-            qz["score"] += 1
-        qz["show_expl"] = True
-        st.rerun()
+                if st.button("Submit Answer", type="primary", disabled=sel is None):
+                    correct = sel == q["answer"]
+                    stats["user_answers"][qid] = sel
+                    stats["attempts"].append(
+                        {
+                            "qid": qid,
+                            "correct": correct,
+                            "ts": datetime.utcnow().isoformat(),
+                        }
+                    )
+                    save_stats(stats)
+                    if correct:
+                        qz["score"] += 1
+                    qz["show_expl"] = True
+                    st.rerun()
 
-# =========================
-# EXPLANATION (UWORLD STYLE)
-# =========================
-if qz["show_expl"]:
-    with left:
-        correct = sel == q["answer"]
-        st.markdown(
-            f"""
-            <div style="
-                background-color: {'#e8f5e9' if correct else '#fdecea'};
-                padding: 20px;
-                border-radius: 8px;
-                margin-top: 20px;
-                border: 1px solid #ccc;
-            ">
-                <strong>{'Correct' if correct else 'Incorrect'}</strong><br><br>
-                <strong>Correct Answer:</strong> {q["answer"]}<br><br>
-                {q.get("explanation", "")}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        # attachments (images / pdfs)
-        for att in q["attachments"]:
-            if os.path.exists(att["path"]):
-                if att["mime"].startswith("image"):
-                    st.image(att["path"])
-                elif "pdf" in att["mime"]:
-                    embed_pdf(att["path"])
-                else:
-                    st.download_button(
-                        att["name"],
-                        open(att["path"], "rb").read(),
+                if qz["show_expl"]:
+                    correct = stats["user_answers"].get(qid) == q["answer"]
+                    st.markdown(
+                        f"""
+                        <div style="
+                            background-color: {'#e8f5e9' if correct else '#fdecea'};
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin-top: 20px;
+                            border: 1px solid #ccc;
+                        ">
+                            <strong>{'Correct' if correct else 'Incorrect'}</strong><br><br>
+                            <strong>Correct Answer:</strong> {q["answer"]}<br><br>
+                            {q.get("explanation", "")}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
                     )
 
-# =========================
-# NEXT QUESTION (RIGHT SIDE)
-# =========================
-with right:
-    if qz["show_expl"] and st.button("Next Question ➡️"):
-        qz["index"] += 1
-        qz["show_expl"] = False
-        st.rerun()
+            with right:
+                if qz["show_expl"] and st.button("Next Question ➡️"):
+                    qz["index"] += 1
+                    qz["show_expl"] = False
+                    st.rerun()
 
 # =========================================================
 # REVIEW
