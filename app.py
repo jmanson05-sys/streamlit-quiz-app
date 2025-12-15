@@ -609,7 +609,7 @@ elif page == "Review":
                     """,
                     unsafe_allow_html=True
                 )
-                st.stop()
+    st.stop()
 # =========================================================
 # ADMIN (CONTAINER WRAPPER ADDED)
 # =========================================================
@@ -659,7 +659,7 @@ elif page == "Admin":
             if st.button("Save Changes", type="primary"):
                 save_bank(bank)
                 st.success("Changes saved successfully to the question bank.")
-            st.stop()
+st.stop()
 # =========================================================
 # ANALYTICS (CONTAINER WRAPPER ADDED)
 # =========================================================
@@ -706,7 +706,7 @@ elif page == "Analytics":
             # Pivot for display
             pivot_df = category_performance.pivot(index='Category', columns='Status', values='Percentage').fillna(0)
             st.dataframe(pivot_df.style.format("{:.1f}%"), use_container_width=True)
-            st.stop()
+st.stop()
 # =========================================================
 # IMPORT / EXPORT (UPDATED)
 # =========================================================
