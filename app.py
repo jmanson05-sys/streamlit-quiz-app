@@ -28,9 +28,13 @@ st.markdown(
         color: #000000; /* PURE BLACK for maximum readability */
     }
 
-    /* --- FIX: Force Headers to be Black --- */
-    h1, h2, h3, h4, h5, h6 {
+    /* --- FIX: Force ALL Text and Headers to be Black --- */
+    h1, h2, h3, h4, h5, h6, 
+    [data-testid*="stHeader"], /* Targets Streamlit's hidden header elements */
+    .stMarkdown, /* Targets ALL Markdown text */
+    p, label, span {
         color: #000000 !important;
+        opacity: 1 !important; /* Ensure opacity is not reduced by theme */
     }
     
     /* 2. Sidebar and Navigation */
