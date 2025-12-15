@@ -804,7 +804,6 @@ elif page == "Import / Export":
             results_df['Category'] = results_df['qid'].apply(lambda x: qid_to_details.get(x, (None, None))[0])
             results_df['Topic'] = results_df['qid'].apply(lambda x: qid_to_details.get(x, (None, None))[1])
 
-
             st.download_button(
                 label="📊 Download Quiz Results (Excel)",
                 data=to_excel_bytes(results_df),
