@@ -282,89 +282,88 @@ if page == "Quiz":
             # =========================
             # LEFT PANEL (Question)
             # =========================
-with left:
-    # =========================
-    # QUESTION STEM
-    # =========================
-    st.markdown(
-        f"""
-        <div style="
-            background-color: white;
-            padding: 24px;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            font-size: 18px;
-            line-height: 1.6;
-            margin-bottom: 16px;
-        ">
-            <strong>Question {idx + 1}</strong><br><br>
-            {q["question"]}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+            with left:
+            # =========================
+            # QUESTION STEM
+            # =========================
+                st.markdown(
+                    f"""
+                    <div style="
+                    background-color: white;
+                    padding: 24px;
+                    border-radius: 8px;
+                    border: 1px solid #e0e0e0;
+                    font-size: 18px;
+                    line-height: 1.6;
+                    margin-bottom: 16px;
+                    ">
+                    <strong>Question {idx + 1}</strong><br><br>
+                    {q["question"]}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-    # =========================
-    # ANSWER STATE
-    # =========================
-    answered = qid in stats["user_answers"]
-    user_answer = stats["user_answers"].get(qid)
-    correct_answer = q["answer"]
+            # =========================
+            # ANSWER STATE
+            # =========================
+            answered = qid in stats["user_answers"]
+            user_answer = stats["user_answers"].get(qid)
+            correct_answer = q["answer"]
 
-    # =========================
-    # SHUFFLE CHOICES (ONCE)
-    # =========================
-    if qid not in qz["choice_order"]:
-        import random
-        opts = q["choices"].copy()
-        random.shuffle(opts)
-        qz["choice_order"][qid] = opts
+            # =========================
+            # SHUFFLE CHOICES (ONCE)
+            # =========================
+            if qid not in qz["choice_order"]:
+                import random
+                opts = q["choices"].copy()
+                random.shuffle(opts)
+                qz["choice_order"][qid] = opts
 
-    # =========================
-    # BEFORE SUBMIT
-    # =========================
-    if not answered:
-        sel = st.radio(
-            "",
-            qz["choice_order"][qid],
-            index=None,
-            label_visibility="collapsed"
-        )
+            # =========================
+            # BEFORE SUBMIT
+            # =========================
+            if not answered:
+                sel = st.radio(
+                    "",
+                    qz["choice_order"][qid],
+                    index=None,
+                    label_visibility="collapsed"
+                )
 
-        if st.button("Submit Answer", type="primary", disabled=sel is None):
-            stats["user_answers"][qid] = sel
-            stats["attempts"].append(
-                {
-                    "qid": qid,
-                    "correct": sel == correct_answer,
-                    "ts": datetime.utcnow().isoformat(),
-                }
-            )
-            save_stats(stats)
+             if st.button("Submit Answer", type="primary", disabled=sel is None):
+                 stats["user_answers"][qid] = sel
+                 stats["attempts"].append(
+                     {
+                         "qid": qid,
+                         "correct": sel == correct_answer,
+                         "ts": datetime.utcnow().isoformat(),
+                     }
+                 )
+                 save_stats(stats)
 
-            if sel == correct_answer:
-                qz["score"] += 1
+             if sel == correct_answer:
+                 qz["score"] += 1
+                 
+                 qz["show_expl"] = True
+                 st.rerun()
 
-            qz["show_expl"] = True
-            st.rerun()
-
-    # =========================
-    # AFTER SUBMIT (UWORLD STYLE)
-    # =========================
-    else:
-        for i, opt in enumerate(qz["choice_order"][qid]):
-            label = chr(65 + i)  # A, B, C, D
-
-            if opt == correct_answer:
-                bg = "#e8f5e9"
-                border = "#2e7d32"
-            elif opt == user_answer:
-                bg = "#fdecea"
-                border = "#c62828"
-            else:
-                bg = "#f7f7f7"
-                border = "#ccc"
-
+            # =========================
+            # AFTER SUBMIT (UWORLD STYLE)
+            # =========================
+             else:
+                 for i, opt in enumerate(qz["choice_order"][qid]):
+                     label = chr(65 + i)  # A, B, C, D
+                     if opt == correct_answer:
+                         bg = "#e8f5e9"
+                         border = "#2e7d32"
+                     elif opt == user_answer:
+                         bg = "#fdecea"
+                         border = "#c62828"
+                     else:
+                         bg = "#f7f7f7"
+                         border = "#ccc"
+                         
             st.markdown(
                 f"""
                 <div style="
