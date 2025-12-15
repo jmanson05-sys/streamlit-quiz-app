@@ -240,13 +240,18 @@ if page == "Quiz":
             ["All", "Correct", "Incorrect", "Unanswered"],
             disabled=builder_disabled,
         )
-        n = st.number_input(
-            "Number of questions",
-            min_value=1,
-            max_value=max(1, len(bank)),
-            value=min(10, len(bank)),
-            disabled=builder_disabled,
-        )
+        if len(bank) == 0:
+            st.warning("No questions in the bank yet.")
+            n = 0
+        else:
+            n = st.number_input(
+                "Number of questions",
+                min_value=1,
+                max_value=len(bank),
+                value=min(10, len(bank)),
+                disabled=builder_disabled,
+            )
+
 
         if st.button("Start quiz", type="primary", disabled=builder_disabled):
             import random
