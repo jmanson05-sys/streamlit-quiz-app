@@ -576,34 +576,52 @@ elif page == "Review":
             qid = q["qid"]
             user_ans = stats["user_answers"].get(qid, "N/A")
             is_correct = user_ans == q["answer"]
-    st.stop()
+
+            # VVV--- This line was the start of the incorrect indentation. ---VVV
             status_icon = "❌" if not is_correct and user_ans != "N/A" else ("🚩" if qid in flagged else "")
 
             with st.expander(f"{status_icon} Q{q['id_num']} — {q['question'][:70]}..."):
                 
-                st.markdown(f"### Question {q['id_num']}")
-                st.write(q["question"])
+                # Use Markdown for question stem styling
+                st.markdown(
+                    f"""
+                    <div class="question-stem-box" style="padding: 15px; border:none; margin-bottom: 10px;">
+                        **Question {q['id_num']}**<br><br>
+                        {q["question"]}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
                 
-                # Show choices and highlight
-                st.markdown("#### Choices")
-                for c in q['choices']:
+                st.markdown("#### Choices and Your Result")
+                for i, c in enumerate(q['choices']):
+                    label = chr(65 + i)
+                    
                     if c == q['answer']:
-                        color = 'green'
-                        label = '✅ Correct'
+                        box_class = 'feedback-box-correct'
+                        feedback = ' (✅ Correct Answer)'
                     elif c == user_ans:
-                        color = 'red'
-                        label = '❌ Your Answer'
+                        box_class = 'feedback-box-incorrect'
+                        feedback = ' (❌ Your Answer)'
                     else:
-                        color = 'black'
-                        label = ''
-                    st.markdown(f'- <span style="color:{color}; font-weight:bold;">{c}</span> {label}', unsafe_allow_html=True)
+                        box_class = 'feedback-box-unselected'
+                        feedback = ''
 
+                    st.markdown(
+                        f"""
+                        <div class="feedback-box-default {box_class}" style="margin-bottom:5px;">
+                            **{label}.** {c} {feedback}
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
                 # Explanation
+                explanation_class = "explanation-correct" if is_correct else "explanation-incorrect"
                 st.markdown("#### Explanation")
                 st.markdown(
                     f"""
-                    <div style="padding:15px; border-radius:6px; background:#f5f5f5; border:1px solid #ddd;">
+                    <div class="explanation-box {explanation_class}">
                         {q.get("explanation", "No explanation provided.")}
                     </div>
                     """,
