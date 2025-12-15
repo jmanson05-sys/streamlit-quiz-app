@@ -178,12 +178,15 @@ def build_adaptive_pool(bank, stats):
 
     return pool
 
-
 if page == "Quiz":
     st.subheader("Quiz Builder")
     qz = st.session_state.quiz
     builder_disabled = qz["active"]
+    
+    st.write("DEBUG — quiz state:", qz)
+    st.write("DEBUG — pool length:", len(qz["pool"]))
 
+    
     quiz_mode = st.radio(
         "Quiz mode",
         ["Standard", "🎯 Adaptive (Weak Areas)"],
@@ -230,10 +233,9 @@ if page == "Quiz":
             st.warning("No questions match your filters. Try changing category, topic, or status.")
             st.stop()
 
-            
         random.shuffle(pool)
-        pool = pool[:n]
-        
+        pool = pool[: min(n, len(pool))]
+
         qz["active"] = True
         qz["pool"] = pool
         qz["index"] = 0
@@ -256,7 +258,14 @@ if page == "Quiz":
             if st.button("End quiz"):
                 qz["active"] = False
                 st.rerun()
+        
+        
         else:
+            if idx >= len(qz["pool"]):
+                st.error("Quiz index out of range — resetting quiz.")
+                qz["active"] = False
+                st.stop()
+
             q = qz["pool"][idx]
             qid = q["qid"]
 
