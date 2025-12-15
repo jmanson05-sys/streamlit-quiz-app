@@ -244,14 +244,18 @@ if page == "Quiz":
             st.warning("No questions in the bank yet.")
             n = 0
         else:
+            max_n = len(bank)
+            default_n = min(10, max_n)
+
             n = st.number_input(
                 "Number of questions",
                 min_value=1,
-                max_value=len(bank),
-                value=min(10, len(bank)),
+                max_value=max_n,
+                value=default_n,
+                step=1,
+                key=f"num_q_{max_n}",  # 👈 THIS IS THE FIX
                 disabled=builder_disabled,
             )
-
 
         if st.button("Start quiz", type="primary", disabled=builder_disabled):
             import random
