@@ -22,7 +22,11 @@ import streamlit as st
 # CONFIG
 # =========================================================
 st.set_page_config(
-    st.markdown("""
+    page_title="Question Bank & Quiz System",
+    layout="wide"
+)
+st.markdown(
+    """
     <style>
     /* Make radio options feel like clickable rows */
     div[role="radiogroup"] label {
@@ -31,17 +35,17 @@ st.set_page_config(
         margin-bottom: 6px;
         border: 1px solid #eee;
     }
-div[role="radiogroup"] label:hover {
+    div[role="radiogroup"] label:hover {
     background-color: #f7f7f7;
-}
+    }
 
-/* Slightly tighter default spacing */
-.block-container { padding-top: 1.5rem; }
-</style>
-""", unsafe_allow_html=True)
-
-    page_title="Question Bank & Quiz System",
-    layout="wide"
+    /* Slightly tighter default spacing */
+    .block-container { 
+        padding-top: 1.5rem; 
+    }
+    </style>
+    """, 
+    unsafe_allow_html=True
 )
 
 DATA_DIR = "qb_data"
@@ -301,10 +305,30 @@ if page == "Quiz":
             correct_answer = q["answer"]
             
             with main_col:
+            # =========================
+            # QUESTION + ANSWERS
+            # =========================
 
-            # =========================
-            # RIGHT PANEL (Progress)
-            # =========================
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: white;
+                    padding: 28px;
+                    border-radius: 10px;
+                    border: 1px solid #e0e0e0;
+                    font-size: 18px;
+                    line-height: 1.6;
+                    margin-bottom: 24px;
+                ">
+                    <strong>Question {idx + 1}</strong><br><br>
+                    {q["question"]}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            # (answers go here — your existing radio / UWORLD block)
+
             with side_col:
                 st.markdown("### Progress")
                 st.progress((idx + 1) / total)
@@ -323,7 +347,8 @@ if page == "Quiz":
             # =========================
             # LEFT PANEL (Question)
             # =========================
-            with left:
+            with main_col:
+                
                 # =========================
                 # QUESTION STEM
                 # =========================
