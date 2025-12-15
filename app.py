@@ -169,7 +169,7 @@ if page == "Quiz":
                 else "Incorrect"
             )
 
-        def build_standard_pool():
+def build_standard_pool():
     p = []
     for q in bank:
         if cat != "All" and q.get("category") != cat:
@@ -180,6 +180,35 @@ if page == "Quiz":
             continue
         p.append(q)
     return p
+
+
+def build_adaptive_pool():
+    incorrect = []
+    flagged = []
+    unanswered = []
+    rest = []
+
+    for q in bank:
+        qid = q["qid"]
+
+        if qid in stats["user_answers"]:
+            if stats["user_answers"][qid] != q["answer"]:
+                incorrect.append(q)
+            else:
+                rest.append(q)
+        else:
+            unanswered.append(q)
+
+        if qid in stats["flagged"]:
+            flagged.append(q)
+
+    pool = []
+    pool.extend(incorrect)
+    pool.extend([q for q in flagged if q not in pool])
+    pool.extend([q for q in unanswered if q not in pool])
+    pool.extend([q for q in rest if q not in pool])
+
+    return pool
 
 
 def build_adaptive_pool():
