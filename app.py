@@ -28,12 +28,19 @@ st.markdown(
         color: #000000; /* PURE BLACK for maximum readability */
     }
 
-    /* --- FIX: Force Main Content Background to White --- */
-    /* This targets the container holding the primary content */
-    .st-emotion-cache-18ni294 { /* Specific Streamlit class for the main content block */
+    /* --- FIX: Force Main Content Area Background to White --- */
+    /* Targets the primary column wrapper using Streamlit's data-testid for reliability */
+    [data-testid="stVerticalBlock"] {
+        /* Check if the parent is the main page content, not a sidebar block */
+        &:has(.stButton) {
+            background-color: #ffffff !important;
+            padding: 30px;
+            border-radius: 10px;
+        }
+    }
+    /* Fallback for the highest-level content block */
+    [data-testid="stVerticalBlock"] > .block-container {
         background-color: #ffffff !important;
-        padding: 30px; /* Add padding similar to the containers for spacing */
-        border-radius: 10px;
     }
     
     /* --- FIX: Force ALL Text and Headers to be Black --- */
