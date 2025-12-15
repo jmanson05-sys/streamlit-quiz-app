@@ -794,15 +794,32 @@ elif page == "Import / Export":
     with col2:
         if stats["attempts"]:
             results_df = pd.DataFrame(stats["attempts"])
-            results_df["question_id"] = results_df["qid"].map(
-                lambda x: next((q.get("id_num") for q in bank if q["qid"] == x), None)
+
+            # 1. Create a clean mapping dictionary for all necessary details
+            qid_to_details = {}
+            for q in bank:
+                qid_to_details[q['qid']] = {
+                    "id_num": q.get("id_num", "N/A"),
+                    "category": q.get('category', 'N/A'),
+                    "topic": q.get('topic', 'N/A')
+                }
+            
+            # 2. Apply mapping robustly, ensuring default 'N/A' if QID is missing
+            results_df["question_id"] = results_df["qid"].apply(
+                lambda x: qid_to_details.get(x, {}).get("id_num", "N/A")
             )
-            
-            # Map QID back to Category/Topic for richer results
-            qid_to_details = {q['qid']: (q.get('category'), q.get('topic')) for q in bank}
-            
-            results_df['Category'] = results_df['qid'].apply(lambda x: qid_to_details.get(x, (None, None))[0])
-            results_df['Topic'] = results_df['qid'].apply(lambda x: qid_to_details.get(x, (None, None))[1])
+            results_df['Category'] = results_df['qid'].apply(
+                lambda x: qid_to_details.get(x, {}).get("category", "N/A")
+            )
+            results_df['Topic'] = results_df['qid'].apply(
+                lambda x: qid_to_details.get(x, {}).get("topic", "N/A")
+            )
+
+            # Reorder columns for better readability in Excel
+            final_columns = [
+                'question_id', 'Category', 'Topic', 'correct', 'ts', 'qid'
+            ]
+            results_df = results_df.reindex(columns=final_columns)
 
             st.download_button(
                 label="📊 Download Quiz Results (Excel)",
