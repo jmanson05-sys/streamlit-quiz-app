@@ -140,6 +140,10 @@ def status_of(q):
 # LOAD DATA
 # =========================================================
 bank = load_bank()
+st.sidebar.markdown("### 🔎 Debug")
+st.sidebar.write("BANK_PATH:", BANK_PATH)
+st.sidebar.write("Questions loaded:", len(bank))
+
 stats = load_stats()
 ensure_ids(bank)
 save_bank(bank)
