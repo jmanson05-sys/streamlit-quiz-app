@@ -371,7 +371,12 @@ elif page == "Analytics":
 # IMPORT / EXPORT
 # =========================================================
 elif page == "Import / Export":
-    st.subheader("Import from Excel")
+    st.subheader("Import / Export")
+
+    # =========================
+    # IMPORT
+    # =========================
+    st.markdown("### 📤 Import from Excel")
 
     upload = st.file_uploader("Upload .xlsx", type=["xlsx"])
     if upload:
@@ -386,18 +391,71 @@ elif page == "Import / Export":
                     if str(c).lower().startswith("choice")
                     and pd.notna(r[c])
                 ]
-                bank.append(
-                    {
-                        "qid": uuid.uuid4().hex[:10],
-                        "id_num": len(bank) + 1,
-                        "category": str(r.get("category", "")),
-                        "topic": str(r.get("topic", "")),
-                        "question": str(r.get("question", "")),
-                        "choices": choices,
-                        "answer": str(r.get("answer", "")),
-                        "explanation": str(r.get("explanation", "")),
-                        "attachments": [],
-                    }
-                )
+
+                bank.append({
+                    "qid": uuid.uuid4().hex[:10],
+                    "id_num": len(bank) + 1,
+                    "category": str(r.get("category", "")),
+                    "topic": str(r.get("topic", "")),
+                    "question": str(r.get("question", "")),
+                    "choices": choices,
+                    "answer": str(r.get("answer", "")),
+                    "explanation": str(r.get("explanation", "")),
+                    "attachments": [],
+                })
+
             save_bank(bank)
             st.success("Imported successfully")
+
+    # =========================
+    # EXPORT QUESTION BANK
+    # =========================
+    st.markdown("---")
+    st.markdown("### 📥 Export Question Bank")
+
+    if bank:
+        qb_rows = []
+        for q in bank:
+            row = {
+                "id": q["id_num"],
+                "category": q.get("category", ""),
+                "topic": q.get("topic", ""),
+                "question": q["question"],
+                "answer": q["answer"],
+                "explanation": q.get("explanation", ""),
+            }
+            for i, c in enumerate(q["choices"], start=1):
+                row[f"choice{i}"] = c
+            qb_rows.append(row)
+
+        qb_df = pd.DataFrame(qb_rows)
+
+        st.download_button(
+            label="📘 Download Question Bank (Excel)",
+            data=qb_df.to_excel(index=False),
+            file_name="question_bank_backup.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+    else:
+        st.info("No questions to export.")
+
+    # =========================
+    # EXPORT QUIZ RESULTS
+    # =========================
+    st.markdown("---")
+    st.markdown("### 📊 Export Quiz Results")
+
+    if stats["attempts"]:
+        results_df = pd.DataFrame(stats["attempts"])
+        results_df["question_id"] = results_df["qid"].map(
+            lambda x: next((q["id_num"] for q in bank if q["qid"] == x), None)
+        )
+
+        st.download_button(
+            label="📊 Download Quiz Results (Excel)",
+            data=results_df.to_excel(index=False),
+            file_name="quiz_results_backup.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+    else:
+        st.info("No quiz attempts yet.")
