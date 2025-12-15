@@ -611,99 +611,101 @@ elif page == "Review":
                 )
 
 # =========================================================
-# ADMIN
+# ADMIN (CONTAINER WRAPPER ADDED)
 # =========================================================
 elif page == "Admin":
-    st.subheader("Admin Editor")
+    # --- ADDED CONTAINER HERE ---
+    with st.container(border=True):
+        st.subheader("Admin Editor")
 
-    if not bank:
-        st.info("No questions yet. Import some data on the 'Import / Export' page.")
-    else:
-        # Create a dictionary for selection with a cleaner label
-        labels = {
-            f"Q{q['id_num']} — {q['question'][:50]}...": q for q in bank
-        }
-        label = st.selectbox("Select question to edit", list(labels))
-        q = labels[label]
+        if not bank:
+            st.info("No questions yet. Import some data on the 'Import / Export' page.")
+        else:
+            # Create a dictionary for selection with a cleaner label
+            labels = {
+                f"Q{q['id_num']} — {q['question'][:50]}...": q for q in bank
+            }
+            label = st.selectbox("Select question to edit", list(labels))
+            q = labels[label]
 
-        st.caption(f"Editing QID: {q['qid']}")
+            st.caption(f"Editing QID: {q['qid']}")
 
-        col1, col2 = st.columns(2)
-        with col1:
-             q["category"] = st.text_input("Category", q.get("category", ""))
-        with col2:
-             q["topic"] = st.text_input("Topic", q.get("topic", ""))
+            col1, col2 = st.columns(2)
+            with col1:
+                q["category"] = st.text_input("Category", q.get("category", ""))
+            with col2:
+                q["topic"] = st.text_input("Topic", q.get("topic", ""))
 
-        q["question"] = st.text_area("Question", q["question"], height=150)
-        
-        # Helper function for editing choices
-        choices_text = st.text_area(
-            "Choices (one option per line)", 
-            "\n".join(q["choices"]), 
-            height=150
-        )
-        q["choices"] = [line for line in choices_text.splitlines() if line.strip()] # Filter out empty lines
-        
-        q["answer"] = st.text_input(
-            "Correct answer (Must match one of the choices exactly)", 
-            q["answer"]
-        )
-        q["explanation"] = st.text_area(
-            "Explanation", 
-            q.get("explanation", ""),
-            height=200
-        )
-
-        if st.button("Save Changes", type="primary"):
-            save_bank(bank)
-            st.success("Changes saved successfully to the question bank.")
+            q["question"] = st.text_area("Question", q["question"], height=150)
+            
+            # Helper function for editing choices
+            choices_text = st.text_area(
+                "Choices (one option per line)", 
+                "\n".join(q["choices"]), 
+                height=150
+            )
+            q["choices"] = [line for line in choices_text.splitlines() if line.strip()] # Filter out empty lines
+            
+            q["answer"] = st.text_input(
+                "Correct answer (Must match one of the choices exactly)", 
+                q["answer"]
+            )
+            q["explanation"] = st.text_area(
+                "Explanation", 
+                q.get("explanation", ""),
+                height=200
+            )
+            # Add attachment logic here if needed, but for now, just the save button
+            if st.button("Save Changes", type="primary"):
+                save_bank(bank)
+                st.success("Changes saved successfully to the question bank.")
 
 # =========================================================
-# ANALYTICS
+# ANALYTICS (CONTAINER WRAPPER ADDED)
 # =========================================================
 elif page == "Analytics":
-    st.subheader("Analytics")
+    # --- ADDED CONTAINER HERE ---
+    with st.container(border=True):
+        st.subheader("Analytics")
 
-    if not bank:
-        st.info("No data available.")
-    else:
-        rows = []
-        for q in bank:
-            qid = q["qid"]
-            status = status_of(q) # Re-use the helper function
+        if not bank:
+            st.info("No data available.")
+        else:
+            rows = []
+            for q in bank:
+                qid = q["qid"]
+                status = status_of(q) # Re-use the helper function
+                
+                rows.append(
+                    {
+                        "ID": q["id_num"],
+                        "Category": q.get("category", ""),
+                        "Topic": q.get("topic", ""),
+                        "Status": status,
+                        "Flagged": qid in stats["flagged"],
+                    }
+                )
+
+            df_analytics = pd.DataFrame(rows)
+            st.dataframe(df_analytics, use_container_width=True)
             
-            rows.append(
-                {
-                    "ID": q["id_num"],
-                    "Category": q.get("category", ""),
-                    "Topic": q.get("topic", ""),
-                    "Status": status,
-                    "Flagged": qid in stats["flagged"],
-                }
-            )
+            # Summary Charts
+            st.markdown("### Summary")
+            
+            # Pie chart for Status
+            status_counts = df_analytics['Status'].value_counts().reset_index()
+            status_counts.columns = ['Status', 'Count']
+            st.bar_chart(status_counts, x='Status', y='Count')
+            
+            st.markdown("### Performance by Category")
+            
+            # Group by Category and get status counts
+            category_performance = df_analytics.groupby('Category')['Status'].value_counts(normalize=True).mul(100).rename('Percentage').reset_index()
+            category_performance = category_performance[category_performance['Status'] != 'Unanswered'] # Filter out unanswered for cleaner perf view
 
-        df_analytics = pd.DataFrame(rows)
-        st.dataframe(df_analytics, use_container_width=True)
-        
-        # Summary Charts
-        st.markdown("### Summary")
-        
-        # Pie chart for Status
-        status_counts = df_analytics['Status'].value_counts().reset_index()
-        status_counts.columns = ['Status', 'Count']
-        st.bar_chart(status_counts, x='Status', y='Count')
-        
-        st.markdown("### Performance by Category")
-        
-        # Group by Category and get status counts
-        category_performance = df_analytics.groupby('Category')['Status'].value_counts(normalize=True).mul(100).rename('Percentage').reset_index()
-        category_performance = category_performance[category_performance['Status'] != 'Unanswered'] # Filter out unanswered for cleaner perf view
-
-        # Pivot for display
-        pivot_df = category_performance.pivot(index='Category', columns='Status', values='Percentage').fillna(0)
-        st.dataframe(pivot_df.style.format("{:.1f}%"), use_container_width=True)
-
-
+            # Pivot for display
+            pivot_df = category_performance.pivot(index='Category', columns='Status', values='Percentage').fillna(0)
+            st.dataframe(pivot_df.style.format("{:.1f}%"), use_container_width=True)
 # =========================================================
 # IMPORT / EXPORT (UPDATED)
 # =========================================================
