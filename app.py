@@ -235,9 +235,6 @@ if page == "Quiz":
 
         st.rerun()
 
-        random.shuffle(pool)
-        pool = pool[:n]
-
     qz = st.session_state.quiz
 
     if not qz["active"]:
