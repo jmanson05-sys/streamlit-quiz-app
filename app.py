@@ -309,23 +309,8 @@ if page == "Quiz":
                 # =========================
                 # QUESTION STEM
                 # =========================
-                question_text = (q.get("question") or "").strip()
-
-                if not question_text:
-                    st.error("⚠️ This question has no stem text.")
-                else:
-                    st.markdown("### Question Debug")
-                    
-                    st.write("RAW question value:", repr(q.get("question")))
-                    
-                    question_text = (q.get("question") or "").strip()
-                    
-                    if not question_text:
-                        st.error("❌ Question text is empty or invalid")
-                    else:
-                        st.write(question_text)
-
-
+                st.markdown(f"### Question {idx + 1}")
+                st.write(q["question"])
 
                 # =========================
                 # ANSWER STATE
