@@ -531,6 +531,9 @@ elif page == "Import / Export":
     # =========================
     # IMPORT
     # =========================
+  # =========================
+    # IMPORT
+    # =========================
     st.markdown("### 📤 Import from Excel")
     st.info("Excel columns needed: question, choice1, choice2, choice3, choice4, answer, explanation, category, topic")
 
@@ -542,8 +545,22 @@ elif page == "Import / Export":
 
             if st.button("Import Questions"):
                 for _, r in df.iterrows():
-                    # Extract any column starting with 'choice'
-                    choices = [
-                        str(r[c])
-                        for c in df.columns
-                        if str
+                    # FIXED: Condensed this into one line to avoid SyntaxError
+                    choices = [str(r[c]) for c in df.columns if str(c).lower().startswith("choice") and pd.notna(r[c])]
+
+                    bank.append({
+                        "qid": uuid.uuid4().hex[:10],
+                        "id_num": len(bank) + 1,
+                        "category": str(r.get("category", "")),
+                        "topic": str(r.get("topic", "")),
+                        "question": str(r.get("question", "")),
+                        "choices": choices,
+                        "answer": str(r.get("answer", "")),
+                        "explanation": str(r.get("explanation", "")),
+                        "attachments": [],
+                    })
+
+                save_bank(bank)
+                st.success(f"Imported {len(df)} questions successfully!")
+        except Exception as e:
+            st.error(f"Error reading file: {e}")
