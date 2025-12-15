@@ -19,17 +19,20 @@ st.set_page_config(
 
 # === UWorld/TrueLearn Inspired Design ===
 # We use custom CSS to override Streamlit's default styles
-# === UWorld/TrueLearn Inspired Design ===
-# We use custom CSS to override Streamlit's default styles
 st.markdown(
     """
     <style>
     /* 1. Base Styles (Clean, Professional Look) */
     .stApp {
         background-color: #f0f2f6; /* Very light gray background */
-        color: #000000; /* *** Changed to PURE BLACK for maximum readability *** */
+        color: #000000; /* PURE BLACK for maximum readability */
     }
 
+    /* --- FIX: Force Headers to be Black --- */
+    h1, h2, h3, h4, h5, h6 {
+        color: #000000 !important;
+    }
+    
     /* 2. Sidebar and Navigation */
     [data-testid="stSidebar"] {
         background-color: #ffffff; /* White sidebar */
@@ -37,7 +40,7 @@ st.markdown(
     }
     .st-emotion-cache-1cypcdb { /* Sidebar Nav Radio Labels */
         font-weight: 600;
-        color: #000000; /* Ensure sidebar text is dark */
+        color: #000000;
     }
 
     /* 3. Question Stem Box */
@@ -49,7 +52,7 @@ st.markdown(
         font-size: 19px; /* Slightly larger text */
         line-height: 1.6;
         margin-bottom: 24px;
-        color: #000000; /* *** Changed to PURE BLACK for question stem text *** */
+        color: #000000;
     }
 
     /* 4. Answer Choice Radios (Clickable Rows) */
@@ -75,7 +78,7 @@ st.markdown(
         font-size: 16px;
         margin: 0 !important;
         font-weight: 500;
-        color: #000000; /* Ensure answer choice text is black */
+        color: #000000;
     }
 
     /* 5. Custom Feedback Boxes (After Submission) */
@@ -84,7 +87,7 @@ st.markdown(
         margin-bottom:10px;
         border-radius:6px;
         font-size:16px;
-        color: #000000; /* *** Changed to PURE BLACK for feedback text *** */
+        color: #000000;
     }
     .feedback-box-correct {
         border: 2px solid #1e88e5; /* UWorld Blue for correct */
@@ -105,7 +108,7 @@ st.markdown(
         padding:20px;
         border-radius:8px;
         border: 1px solid #b0b0b0;
-        color: #000000; /* Ensure explanation text is black */
+        color: #000000;
     }
     .explanation-correct {
         background: #e3f2fd; /* Light Blue for correct */
