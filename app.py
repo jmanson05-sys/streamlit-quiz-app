@@ -183,10 +183,6 @@ if page == "Quiz":
     qz = st.session_state.quiz
     builder_disabled = qz["active"]
     
-    st.write("DEBUG — quiz state:", qz)
-    st.write("DEBUG — pool length:", len(qz["pool"]))
-
-    
     quiz_mode = st.radio(
         "Quiz mode",
         ["Standard", "🎯 Adaptive (Weak Areas)"],
@@ -264,9 +260,8 @@ if page == "Quiz":
         
         else:
             if idx >= len(qz["pool"]):
-                st.error("Quiz index out of range — resetting quiz.")
                 qz["active"] = False
-                st.stop()
+                st.rerun()
 
             q = qz["pool"][idx]
             qid = q["qid"]
