@@ -22,6 +22,24 @@ import streamlit as st
 # CONFIG
 # =========================================================
 st.set_page_config(
+    st.markdown("""
+    <style>
+    /* Make radio options feel like clickable rows */
+    div[role="radiogroup"] label {
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 6px;
+        border: 1px solid #eee;
+    }
+div[role="radiogroup"] label:hover {
+    background-color: #f7f7f7;
+}
+
+/* Slightly tighter default spacing */
+.block-container { padding-top: 1.5rem; }
+</style>
+""", unsafe_allow_html=True)
+
     page_title="Question Bank & Quiz System",
     layout="wide"
 )
@@ -190,46 +208,46 @@ def build_adaptive_pool(bank, stats):
     return pool
 
 if page == "Quiz":
-    st.subheader("Quiz Builder")
-    qz = st.session_state.quiz
-    builder_disabled = qz["active"]
-    
-    quiz_mode = st.radio(
-        "Quiz mode",
-        ["Standard", "🎯 Adaptive (Weak Areas)"],
-        horizontal=True
-    )
-
-    categories = sorted({q.get("category", "") for q in bank})
-    topics = sorted({q.get("topic", "") for q in bank})
-
-    c1, c2, c3, c4 = st.columns(4)
-
-    with c1:
-        cat = st.selectbox("Category", ["All"] + categories, disabled=builder_disabled)
-
-    with c2:
-        topic = st.selectbox("Topic", ["All"] + topics, disabled=builder_disabled)
-
-    with c3:
-        status = st.selectbox(
-            "Status",
-            ["All", "Correct", "Incorrect", "Unanswered"],
-            index=0,  # 👈 DEFAULT TO "All"
-            disabled=builder_disabled
+    builder_col, main_col, side_col = st.columns([1.1, 2.8, 1.1])
+    with builder_col:
+        st.subheader("Quiz Builder")
+        qz = st.session_state.quiz
+        builder_disabled = qz["active"]
+        
+        quiz_mode = st.radio(
+            "Quiz mode",
+            ["Standard", "🎯 Adaptive (Weak Areas)"],
+            horizontal=True
         )
-
-    with c4:
-        n = st.number_input(
-            "Number of questions",
-            min_value=1,
-            max_value=max(1, len(bank)),
-            value=min(10, max(1, len(bank))),
-            disabled=builder_disabled
-        )
-
-    if st.button("Start quiz", type="primary", disabled=qz["active"]):
-        import random
+        categories = sorted({q.get("category", "") for q in bank})
+        topics = sorted({q.get("topic", "") for q in bank})
+        
+        c1, c2, c3, c4 = st.columns(4)
+        
+        with c1:
+            cat = st.selectbox("Category", ["All"] + categories, disabled=builder_disabled)
+            
+        with c2:
+            topic = st.selectbox("Topic", ["All"] + topics, disabled=builder_disabled)
+        
+        with c3:
+            status = st.selectbox(
+                "Status",
+                ["All", "Correct", "Incorrect", "Unanswered"],
+                index=0,  # 👈 DEFAULT TO "All"
+                    disabled=builder_disabled
+            )
+        with c4:
+            n = st.number_input(
+                "Number of questions",
+                min_value=1,
+                max_value=max(1, len(bank)),
+                value=min(10, max(1, len(bank))),
+                disabled=builder_disabled
+            )
+        
+        if st.button("Start quiz", type="primary", disabled=qz["active"]):
+            import random
 
         if quiz_mode.startswith("🎯"):
             pool = build_adaptive_pool(bank, stats)
@@ -282,12 +300,12 @@ if page == "Quiz":
             user_answer = stats["user_answers"].get(qid)
             correct_answer = q["answer"]
             
-            left, right = st.columns([3, 1])
+            with main_col:
 
             # =========================
             # RIGHT PANEL (Progress)
             # =========================
-            with right:
+            with side_col:
                 st.markdown("### Progress")
                 st.progress((idx + 1) / total)
                 st.caption(f"Question {idx + 1} of {total}")
@@ -309,8 +327,24 @@ if page == "Quiz":
                 # =========================
                 # QUESTION STEM
                 # =========================
-                st.markdown(f"### Question {idx + 1}")
-                st.write(q["question"])
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color: white;
+                        padding: 28px;
+                        border-radius: 10px;
+                        border: 1px solid #e0e0e0;
+                        font-size: 18px;
+                        line-height: 1.6;
+                        margin-bottom: 24px;
+                    ">
+                        <strong>Question {idx + 1}</strong><br><br>
+                        {q["question"]}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
 
                 # =========================
                 # ANSWER STATE
