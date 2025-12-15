@@ -24,25 +24,10 @@ st.markdown(
     <style>
     /* 1. Base Styles (Clean, Professional Look) */
     .stApp {
-        background-color: #f0f2f6; /* Very light gray background (App Frame) */
+        background-color: #f0f2f6; /* Very light gray background */
         color: #000000; /* PURE BLACK for maximum readability */
     }
 
-    /* --- FIX: Force Main Content Area Background to White --- */
-    /* Targets the primary column wrapper using Streamlit's data-testid for reliability */
-    [data-testid="stVerticalBlock"] {
-        /* Check if the parent is the main page content, not a sidebar block */
-        &:has(.stButton) {
-            background-color: #ffffff !important;
-            padding: 30px;
-            border-radius: 10px;
-        }
-    }
-    /* Fallback for the highest-level content block */
-    [data-testid="stVerticalBlock"] > .block-container {
-        background-color: #ffffff !important;
-    }
-    
     /* --- FIX: Force ALL Text and Headers to be Black --- */
     h1, h2, h3, h4, h5, h6, 
     [data-testid*="stHeader"], /* Targets Streamlit's hidden header elements */
@@ -135,7 +120,7 @@ st.markdown(
     .explanation-incorrect {
         background: #ffebee; /* Light Red for incorrect */
     }
-    /* Tighter container padding (overrides Streamlit default) */
+    /* Tighter container padding */
     .block-container { 
         padding-top: 1.5rem; 
     }
