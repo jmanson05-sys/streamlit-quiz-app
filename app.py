@@ -2,17 +2,7 @@ import os
 import json
 import uuid
 import base64
-from datetime import datetime
-
-import pandas as pd
-import streamlit as st
-
-# =========================================================
-# CONFIG
-# =========================================================import os
-import json
-import uuid
-import base64
+import io  # Added for Excel export
 from datetime import datetime
 
 import pandas as pd
@@ -21,12 +11,11 @@ import streamlit as st
 # =========================================================
 # CONFIG
 # =========================================================
-st.sidebar.write("✅ APP FILE LOADED")
-
 st.set_page_config(
     page_title="Question Bank & Quiz System",
     layout="wide"
 )
+
 st.markdown(
     """
     <style>
@@ -38,15 +27,15 @@ st.markdown(
         border: 1px solid #eee;
     }
     div[role="radiogroup"] label:hover {
-    background-color: #f7f7f7;
+        background-color: #f7f7f7;
     }
 
     /* Slightly tighter default spacing */
-    .block-container { 
-        padding-top: 1.5rem; 
+    .block-container {
+        padding-top: 1.5rem;
     }
     </style>
-    """, 
+    """,
     unsafe_allow_html=True
 )
 
@@ -91,6 +80,11 @@ def save_stats(stats):
 
 def ensure_ids(bank):
     next_id = 1
+    # Find max existing ID to avoid duplicates
+    existing_ids = [q.get("id_num", 0) for q in bank]
+    if existing_ids:
+        next_id = max(existing_ids) + 1
+        
     for q in bank:
         q.setdefault("qid", uuid.uuid4().hex[:10])
         if "id_num" not in q:
@@ -99,35 +93,6 @@ def ensure_ids(bank):
         q.setdefault("choices", [])
         q.setdefault("attachments", [])
 
-def qid_folder(qid):
-    folder = os.path.join(ATTACH_DIR, qid)
-    os.makedirs(folder, exist_ok=True)
-    return folder
-
-def save_attachment(qid, file):
-    folder = qid_folder(qid)
-    safe = file.name.replace("/", "_")
-    stored = f"{uuid.uuid4().hex[:8]}__{safe}"
-    path = os.path.join(folder, stored)
-    with open(path, "wb") as f:
-        f.write(file.getbuffer())
-    return {
-        "name": safe,
-        "stored": stored,
-        "path": path,
-        "mime": file.type,
-    }
-
-def embed_pdf(path):
-    with open(path, "rb") as f:
-        b64 = base64.b64encode(f.read()).decode()
-    html = f"""
-    <iframe src="data:application/pdf;base64,{b64}"
-            width="100%" height="500"
-            style="border:1px solid #ddd;border-radius:8px;">
-    </iframe>
-    """
-    st.components.v1.html(html, height=520)
 def status_of(q):
     qid = q["qid"]
     if qid not in stats["user_answers"]:
@@ -138,14 +103,17 @@ def status_of(q):
         else "Incorrect"
     )
 
+def to_excel_bytes(df):
+    """Helper to convert DataFrame to Excel bytes for download"""
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False)
+    return output.getvalue()
+
 # =========================================================
 # LOAD DATA
 # =========================================================
 bank = load_bank()
-st.sidebar.markdown("### 🔎 Debug")
-st.sidebar.write("BANK_PATH:", BANK_PATH)
-st.sidebar.write("Questions loaded:", len(bank))
-
 stats = load_stats()
 ensure_ids(bank)
 save_bank(bank)
@@ -172,6 +140,9 @@ page = st.sidebar.radio(
     "Navigate",
     ["Quiz", "Review", "Admin", "Analytics", "Import / Export"], key="nav_radio"
 )
+
+st.sidebar.markdown("---")
+st.sidebar.caption(f"Questions loaded: {len(bank)}")
 
 # =========================================================
 # QUIZ
@@ -294,6 +265,7 @@ if page == "Quiz":
     if not qz["active"]:
         with main_col:
             st.info("Build a quiz and click **Start quiz**.")
+            st.markdown("Go to **Import / Export** to upload questions via Excel if the bank is empty.")
         st.stop()
 
     # =========================
@@ -331,6 +303,7 @@ if page == "Quiz":
                 font-size:18px;
                 line-height:1.6;
                 margin-bottom:24px;
+                color: #333;
             ">
                 <strong>Question {idx + 1}</strong><br><br>
                 {q["question"]}
@@ -342,7 +315,6 @@ if page == "Quiz":
         # Shuffle answers once
         if qid not in qz["choice_order"]:
             import random
-
             opts = q["choices"].copy()
             random.shuffle(opts)
             qz["choice_order"][qid] = opts
@@ -350,7 +322,7 @@ if page == "Quiz":
         # BEFORE submit
         if not answered:
             sel = st.radio(
-                "",
+                "Select Answer:",
                 qz["choice_order"][qid],
                 index=None,
                 label_visibility="collapsed",
@@ -373,14 +345,14 @@ if page == "Quiz":
                 qz["show_expl"] = True
                 st.rerun()
 
-        # AFTER submit (UWorld-style)
+        # AFTER submit (Visual Feedback)
         else:
             for i, opt in enumerate(qz["choice_order"][qid]):
                 label = chr(65 + i)
                 if opt == correct_answer:
-                    bg, border = "#e8f5e9", "#2e7d32"
+                    bg, border = "#e8f5e9", "#2e7d32" # Green
                 elif opt == user_answer:
-                    bg, border = "#fdecea", "#c62828"
+                    bg, border = "#fdecea", "#c62828" # Red
                 else:
                     bg, border = "#f7f7f7", "#ccc"
 
@@ -393,6 +365,7 @@ if page == "Quiz":
                         border:2px solid {border};
                         background:{bg};
                         font-size:16px;
+                        color: #333;
                     ">
                         <strong>{label}.</strong> {opt}
                     </div>
@@ -409,6 +382,7 @@ if page == "Quiz":
                     border-radius:8px;
                     border:1px solid #ccc;
                     background:{'#e8f5e9' if user_answer == correct_answer else '#fdecea'};
+                    color: #333;
                 ">
                     <strong>{'Correct' if user_answer == correct_answer else 'Incorrect'}</strong><br><br>
                     <strong>Correct answer:</strong> {correct_answer}<br><br>
@@ -427,6 +401,17 @@ if page == "Quiz":
         st.caption(f"Question {idx + 1} of {total}")
         st.caption(f"Score: {qz['score']}")
 
+        # Flag button
+        is_flagged = qid in stats["flagged"]
+        if st.checkbox("Flag for Review", value=is_flagged, key=f"flag_{qid}"):
+            if qid not in stats["flagged"]:
+                stats["flagged"].append(qid)
+                save_stats(stats)
+        else:
+            if qid in stats["flagged"]:
+                stats["flagged"].remove(qid)
+                save_stats(stats)
+
         if qz["show_expl"] and st.button("Next Question ➡️"):
             qz["index"] += 1
             qz["show_expl"] = False
@@ -444,6 +429,7 @@ elif page == "Review":
     )
     flagged = set(stats["flagged"])
 
+    count = 0
     for q in bank:
         qid = q["qid"]
         incorrect = (
@@ -459,14 +445,15 @@ elif page == "Review":
             )
         )
         if show:
-            with st.expander(f"Q{q['id_num']}"):
+            count += 1
+            with st.expander(f"Q{q['id_num']} — {q['question'][:50]}..."):
                 st.write(q["question"])
-                st.write(
-                    "Your answer:",
-                    stats["user_answers"].get(qid, "Unanswered"),
-                )
-                st.write("Correct answer:", q["answer"])
-                st.write(q.get("explanation", ""))
+                st.info(f"Your answer: {stats['user_answers'].get(qid, 'Unanswered')}")
+                st.success(f"Correct answer: {q['answer']}")
+                st.write(f"**Explanation:** {q.get('explanation', '')}")
+    
+    if count == 0:
+        st.info("No questions found matching this filter.")
 
 # =========================================================
 # ADMIN
@@ -483,6 +470,12 @@ elif page == "Admin":
         label = st.selectbox("Select question", list(labels))
         q = labels[label]
 
+        col1, col2 = st.columns(2)
+        with col1:
+             q["category"] = st.text_input("Category", q.get("category", ""))
+        with col2:
+             q["topic"] = st.text_input("Topic", q.get("topic", ""))
+
         q["question"] = st.text_area("Question", q["question"])
         q["choices"] = st.text_area(
             "Choices (one per line)", "\n".join(q["choices"])
@@ -491,14 +484,10 @@ elif page == "Admin":
         q["explanation"] = st.text_area(
             "Explanation", q.get("explanation", "")
         )
-        q["category"] = st.text_input(
-            "Category", q.get("category", "")
-        )
-        q["topic"] = st.text_input("Topic", q.get("topic", ""))
 
-        if st.button("Save"):
+        if st.button("Save Changes"):
             save_bank(bank)
-            st.success("Saved")
+            st.success("Saved successfully!")
 
 # =========================================================
 # ANALYTICS
@@ -506,28 +495,32 @@ elif page == "Admin":
 elif page == "Analytics":
     st.subheader("Analytics")
 
-    rows = []
-    for q in bank:
-        qid = q["qid"]
-        if qid not in stats["user_answers"]:
-            status = "Unanswered"
-        else:
-            status = (
-                "Correct"
-                if stats["user_answers"][qid] == q["answer"]
-                else "Incorrect"
+    if not bank:
+        st.info("No data available.")
+    else:
+        rows = []
+        for q in bank:
+            qid = q["qid"]
+            if qid not in stats["user_answers"]:
+                status = "Unanswered"
+            else:
+                status = (
+                    "Correct"
+                    if stats["user_answers"][qid] == q["answer"]
+                    else "Incorrect"
+                )
+            rows.append(
+                {
+                    "ID": q["id_num"],
+                    "Category": q.get("category", ""),
+                    "Topic": q.get("topic", ""),
+                    "Status": status,
+                    "Flagged": qid in stats["flagged"],
+                }
             )
-        rows.append(
-            {
-                "ID": q["id_num"],
-                "Category": q.get("category", ""),
-                "Topic": q.get("topic", ""),
-                "Status": status,
-                "Flagged": qid in stats["flagged"],
-            }
-        )
 
-    st.dataframe(pd.DataFrame(rows), use_container_width=True)
+        df_analytics = pd.DataFrame(rows)
+        st.dataframe(df_analytics, use_container_width=True)
 
 # =========================================================
 # IMPORT / EXPORT
@@ -539,85 +532,18 @@ elif page == "Import / Export":
     # IMPORT
     # =========================
     st.markdown("### 📤 Import from Excel")
+    st.info("Excel columns needed: question, choice1, choice2, choice3, choice4, answer, explanation, category, topic")
 
     upload = st.file_uploader("Upload .xlsx", type=["xlsx"])
     if upload:
-        df = pd.read_excel(upload)
-        st.dataframe(df.head())
+        try:
+            df = pd.read_excel(upload)
+            st.dataframe(df.head())
 
-        if st.button("Import"):
-            for _, r in df.iterrows():
-                choices = [
-                    str(r[c])
-                    for c in df.columns
-                    if str(c).lower().startswith("choice")
-                    and pd.notna(r[c])
-                ]
-
-                bank.append({
-                    "qid": uuid.uuid4().hex[:10],
-                    "id_num": len(bank) + 1,
-                    "category": str(r.get("category", "")),
-                    "topic": str(r.get("topic", "")),
-                    "question": str(r.get("question", "")),
-                    "choices": choices,
-                    "answer": str(r.get("answer", "")),
-                    "explanation": str(r.get("explanation", "")),
-                    "attachments": [],
-                })
-
-            save_bank(bank)
-            st.success("Imported successfully")
-
-    # =========================
-    # EXPORT QUESTION BANK
-    # =========================
-    st.markdown("---")
-    st.markdown("### 📥 Export Question Bank")
-
-    if bank:
-        qb_rows = []
-        for q in bank:
-            row = {
-                "id": q["id_num"],
-                "category": q.get("category", ""),
-                "topic": q.get("topic", ""),
-                "question": q["question"],
-                "answer": q["answer"],
-                "explanation": q.get("explanation", ""),
-            }
-            for i, c in enumerate(q["choices"], start=1):
-                row[f"choice{i}"] = c
-            qb_rows.append(row)
-
-        qb_df = pd.DataFrame(qb_rows)
-
-        st.download_button(
-            label="📘 Download Question Bank (Excel)",
-            data=qb_df.to_excel(index=False),
-            file_name="question_bank_backup.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-    else:
-        st.info("No questions to export.")
-
-    # =========================
-    # EXPORT QUIZ RESULTS
-    # =========================
-    st.markdown("---")
-    st.markdown("### 📊 Export Quiz Results")
-
-    if stats["attempts"]:
-        results_df = pd.DataFrame(stats["attempts"])
-        results_df["question_id"] = results_df["qid"].map(
-            lambda x: next((q["id_num"] for q in bank if q["qid"] == x), None)
-        )
-
-        st.download_button(
-            label="📊 Download Quiz Results (Excel)",
-            data=results_df.to_excel(index=False),
-            file_name="quiz_results_backup.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-    else:
-        st.info("No quiz attempts yet.")
+            if st.button("Import Questions"):
+                for _, r in df.iterrows():
+                    # Extract any column starting with 'choice'
+                    choices = [
+                        str(r[c])
+                        for c in df.columns
+                        if str
