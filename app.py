@@ -212,124 +212,133 @@ def build_adaptive_pool(bank, stats):
     return pool
 
 if page == "Quiz":
-    builder_col, main_col, side_col = st.columns([1.1, 2.8, 1.1])
+    # 3-column shell: builder | question | progress
+    builder_col, main_col, side_col = st.columns([1.2, 3.2, 1.2])
+
+    # =========================
+    # QUIZ BUILDER (LEFT)
+    # =========================
     with builder_col:
         st.subheader("Quiz Builder")
         qz = st.session_state.quiz
         builder_disabled = qz["active"]
-        
+
         quiz_mode = st.radio(
             "Quiz mode",
             ["Standard", "🎯 Adaptive (Weak Areas)"],
-            horizontal=True
+            horizontal=True,
+            disabled=builder_disabled,
         )
+
         categories = sorted({q.get("category", "") for q in bank})
         topics = sorted({q.get("topic", "") for q in bank})
-        
-        c1, c2, c3, c4 = st.columns(4)
-        
-        with c1:
-            cat = st.selectbox("Category", ["All"] + categories, disabled=builder_disabled)
-            
-        with c2:
-            topic = st.selectbox("Topic", ["All"] + topics, disabled=builder_disabled)
-        
-        with c3:
-            status = st.selectbox(
-                "Status",
-                ["All", "Correct", "Incorrect", "Unanswered"],
-                index=0,  # 👈 DEFAULT TO "All"
-                    disabled=builder_disabled
-            )
-        with c4:
-            n = st.number_input(
-                "Number of questions",
-                min_value=1,
-                max_value=max(1, len(bank)),
-                value=min(10, max(1, len(bank))),
-                disabled=builder_disabled
-            )
-        
-    if st.button("Start quiz", type="primary", disabled=qz["active"]):
-        import random
-        
-        if quiz_mode.startswith("🎯"):
-            pool = build_adaptive_pool(bank, stats)
-        else:
-            pool = build_standard_pool(bank, cat, topic, status)
-            
-        if len(pool) == 0:
-            st.warning("No questions match your filters.")
-            st.stop()
-            
-        random.shuffle(pool)
-        pool = pool[:n]
-        
-        qz["active"] = True
-        qz["pool"] = pool
-        qz["index"] = 0
-        qz["score"] = 0
-        qz["show_expl"] = False
-        qz["choice_order"] = {}
-        
-        st.rerun()
 
+        cat = st.selectbox("Category", ["All"] + categories, disabled=builder_disabled)
+        topic = st.selectbox("Topic", ["All"] + topics, disabled=builder_disabled)
+        status = st.selectbox(
+            "Status",
+            ["All", "Correct", "Incorrect", "Unanswered"],
+            disabled=builder_disabled,
+        )
+        n = st.number_input(
+            "Number of questions",
+            min_value=1,
+            max_value=max(1, len(bank)),
+            value=min(10, len(bank)),
+            disabled=builder_disabled,
+        )
+
+        if st.button("Start quiz", type="primary", disabled=builder_disabled):
+            import random
+
+            pool = (
+                build_adaptive_pool(bank, stats)
+                if quiz_mode.startswith("🎯")
+                else build_standard_pool(bank, cat, topic, status)
+            )
+
+            if not pool:
+                st.warning("No questions match your filters.")
+                st.stop()
+
+            random.shuffle(pool)
+            qz.update(
+                active=True,
+                pool=pool[:n],
+                index=0,
+                score=0,
+                show_expl=False,
+                choice_order={},
+            )
+            st.rerun()
+
+    # =========================
+    # NO ACTIVE QUIZ
+    # =========================
     qz = st.session_state.quiz
-
     if not qz["active"]:
-        st.info("Build a quiz and click Start.")
-    else:
-        idx = qz["index"]
-        total = len(qz["pool"])
+        with main_col:
+            st.info("Build a quiz and click **Start quiz**.")
+        st.stop()
 
-        if idx >= total:
+    # =========================
+    # ACTIVE QUIZ STATE
+    # =========================
+    idx = qz["index"]
+    total = len(qz["pool"])
+
+    if idx >= total:
+        with main_col:
             st.success(f"Quiz complete! Score: {qz['score']} / {total}")
             if st.button("End quiz"):
                 qz["active"] = False
                 st.rerun()
-        
-        else:
-            q = qz["pool"][idx]
-            qid = q["qid"]
+        st.stop()
 
+    q = qz["pool"][idx]
+    qid = q["qid"]
     answered = qid in stats["user_answers"]
     user_answer = stats["user_answers"].get(qid)
     correct_answer = q["answer"]
 
     # =========================
-    # MAIN QUESTION PANEL
+    # QUESTION + ANSWERS (CENTER)
     # =========================
     with main_col:
+        # Question stem
         st.markdown(
             f"""
             <div style="
-                background-color: white;
-                padding: 28px;
-                border-radius: 10px;
-                border: 1px solid #e0e0e0;
-                font-size: 18px;
-                line-height: 1.6;
-                margin-bottom: 24px;
+                background:white;
+                padding:28px;
+                border-radius:10px;
+                border:1px solid #e0e0e0;
+                font-size:18px;
+                line-height:1.6;
+                margin-bottom:24px;
             ">
                 <strong>Question {idx + 1}</strong><br><br>
                 {q["question"]}
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
+        # Shuffle answers once
         if qid not in qz["choice_order"]:
             import random
+
             opts = q["choices"].copy()
             random.shuffle(opts)
             qz["choice_order"][qid] = opts
 
+        # BEFORE submit
         if not answered:
             sel = st.radio(
                 "",
                 qz["choice_order"][qid],
                 index=None,
-                label_visibility="collapsed"
+                label_visibility="collapsed",
             )
 
             if st.button("Submit Answer", type="primary", disabled=sel is None):
@@ -345,9 +354,11 @@ if page == "Quiz":
 
                 if sel == correct_answer:
                     qz["score"] += 1
+
                 qz["show_expl"] = True
                 st.rerun()
 
+        # AFTER submit (UWorld-style)
         else:
             for i, opt in enumerate(qz["choice_order"][qid]):
                 label = chr(65 + i)
@@ -361,40 +372,39 @@ if page == "Quiz":
                 st.markdown(
                     f"""
                     <div style="
-                        padding: 12px 16px;
-                        margin-bottom: 10px;
-                        border-radius: 6px;
-                        border: 2px solid {border};
-                        background-color: {bg};
-                        font-size: 16px;
+                        padding:12px 16px;
+                        margin-bottom:10px;
+                        border-radius:6px;
+                        border:2px solid {border};
+                        background:{bg};
+                        font-size:16px;
                     ">
                         <strong>{label}.</strong> {opt}
                     </div>
                     """,
-                    unsafe_allow_html=True
+                    unsafe_allow_html=True,
                 )
 
         if qz["show_expl"]:
-            correct = user_answer == correct_answer
             st.markdown(
                 f"""
                 <div style="
-                    background-color: {'#e8f5e9' if correct else '#fdecea'};
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin-top: 20px;
-                    border: 1px solid #ccc;
+                    margin-top:20px;
+                    padding:20px;
+                    border-radius:8px;
+                    border:1px solid #ccc;
+                    background:{'#e8f5e9' if user_answer == correct_answer else '#fdecea'};
                 ">
-                    <strong>{'Correct' if correct else 'Incorrect'}</strong><br><br>
-                    <strong>Correct Answer:</strong> {correct_answer}<br><br>
+                    <strong>{'Correct' if user_answer == correct_answer else 'Incorrect'}</strong><br><br>
+                    <strong>Correct answer:</strong> {correct_answer}<br><br>
                     {q.get("explanation", "")}
                 </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
     # =========================
-    # SIDE PANEL
+    # PROGRESS (RIGHT)
     # =========================
     with side_col:
         st.markdown("### Progress")
