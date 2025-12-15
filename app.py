@@ -289,8 +289,8 @@ if page == "Quiz":
                 st.rerun()
         
         else:
-    q = qz["pool"][idx]
-    qid = q["qid"]
+            q = qz["pool"][idx]
+            qid = q["qid"]
 
     answered = qid in stats["user_answers"]
     user_answer = stats["user_answers"].get(qid)
