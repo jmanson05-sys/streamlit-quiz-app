@@ -228,7 +228,8 @@ if page == "Quiz":
             
         if not pool:
             st.warning("No questions match your filters. Try changing category, topic, or status.")
-            return
+            st.stop()
+
             
         random.shuffle(pool)
         pool = pool[:n]
