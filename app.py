@@ -246,14 +246,14 @@ if page == "Quiz":
         else:
             max_n = len(bank)
             default_n = min(10, max_n)
-
+            
             n = st.number_input(
                 "Number of questions",
                 min_value=1,
                 max_value=max_n,
                 value=default_n,
                 step=1,
-                key=f"num_q_{max_n}",  # 👈 THIS IS THE FIX
+                key=f"num_q_{max_n}",  # important for reruns
                 disabled=builder_disabled,
             )
 
