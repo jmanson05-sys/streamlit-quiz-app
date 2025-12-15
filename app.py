@@ -19,13 +19,15 @@ st.set_page_config(
 
 # === UWorld/TrueLearn Inspired Design ===
 # We use custom CSS to override Streamlit's default styles
+# === UWorld/TrueLearn Inspired Design ===
+# We use custom CSS to override Streamlit's default styles
 st.markdown(
     """
     <style>
     /* 1. Base Styles (Clean, Professional Look) */
     .stApp {
         background-color: #f0f2f6; /* Very light gray background */
-        color: #333333; /* Dark gray text */
+        color: #000000; /* *** Changed to PURE BLACK for maximum readability *** */
     }
 
     /* 2. Sidebar and Navigation */
@@ -35,6 +37,7 @@ st.markdown(
     }
     .st-emotion-cache-1cypcdb { /* Sidebar Nav Radio Labels */
         font-weight: 600;
+        color: #000000; /* Ensure sidebar text is dark */
     }
 
     /* 3. Question Stem Box */
@@ -46,7 +49,7 @@ st.markdown(
         font-size: 19px; /* Slightly larger text */
         line-height: 1.6;
         margin-bottom: 24px;
-        color: #333333;
+        color: #000000; /* *** Changed to PURE BLACK for question stem text *** */
     }
 
     /* 4. Answer Choice Radios (Clickable Rows) */
@@ -72,6 +75,7 @@ st.markdown(
         font-size: 16px;
         margin: 0 !important;
         font-weight: 500;
+        color: #000000; /* Ensure answer choice text is black */
     }
 
     /* 5. Custom Feedback Boxes (After Submission) */
@@ -80,7 +84,7 @@ st.markdown(
         margin-bottom:10px;
         border-radius:6px;
         font-size:16px;
-        color: #333;
+        color: #000000; /* *** Changed to PURE BLACK for feedback text *** */
     }
     .feedback-box-correct {
         border: 2px solid #1e88e5; /* UWorld Blue for correct */
@@ -101,6 +105,7 @@ st.markdown(
         padding:20px;
         border-radius:8px;
         border: 1px solid #b0b0b0;
+        color: #000000; /* Ensure explanation text is black */
     }
     .explanation-correct {
         background: #e3f2fd; /* Light Blue for correct */
