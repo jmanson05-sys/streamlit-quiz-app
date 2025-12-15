@@ -21,6 +21,8 @@ import streamlit as st
 # =========================================================
 # CONFIG
 # =========================================================
+st.sidebar.write("✅ APP FILE LOADED")
+
 st.set_page_config(
     page_title="Question Bank & Quiz System",
     layout="wide"
