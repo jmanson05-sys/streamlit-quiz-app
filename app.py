@@ -576,7 +576,7 @@ elif page == "Review":
             qid = q["qid"]
             user_ans = stats["user_answers"].get(qid, "N/A")
             is_correct = user_ans == q["answer"]
-
+    st.stop()
             status_icon = "❌" if not is_correct and user_ans != "N/A" else ("🚩" if qid in flagged else "")
 
             with st.expander(f"{status_icon} Q{q['id_num']} — {q['question'][:70]}..."):
