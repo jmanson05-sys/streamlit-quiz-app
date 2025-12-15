@@ -705,127 +705,129 @@ elif page == "Analytics":
 
 
 # =========================================================
-# IMPORT / EXPORT
+# IMPORT / EXPORT (UPDATED)
 # =========================================================
 elif page == "Import / Export":
-    st.subheader("Import / Export")
+    # 1. Use a container to ensure a clean, isolated background for this section
+    with st.container(border=True):
+        st.subheader("Import / Export")
 
-    # =========================
-    # IMPORT
-    # =========================
-    st.markdown("### 📤 Import from Excel")
-    st.info("Excel columns needed: **question**, **choice1**, **choice2** (up to choiceN), **answer**, **explanation**, **category**, **topic**")
+        # =========================
+        # IMPORT
+        # =========================
+        st.markdown("### 📤 Import from Excel")
+        st.info("Excel columns needed: **question**, **choice1**, **choice2** (up to choiceN), **answer**, **explanation**, **category**, **topic**")
 
-    upload = st.file_uploader("Upload .xlsx", type=["xlsx"])
-    if upload:
-        try:
-            df = pd.read_excel(upload)
-            st.dataframe(df.head())
+        upload = st.file_uploader("Upload .xlsx", type=["xlsx"])
+        if upload:
+            try:
+                df = pd.read_excel(upload)
+                st.dataframe(df.head())
 
-            if st.button("Import Questions", type="primary"):
-                questions_imported = 0
-                for _, r in df.iterrows():
-                    # Extract any column starting with 'choice'
-                    choices = [
-                        str(r[c])
-                        for c in df.columns
-                        if str(c).lower().startswith("choice")
-                        and pd.notna(r[c])
-                    ]
-                    
-                    # Basic Validation
-                    if not r.get("question") or not r.get("answer"):
-                        continue
-                    
-                    questions_imported += 1
-                    bank.append({
-                        "qid": uuid.uuid4().hex[:10],
-                        "id_num": len(bank) + 1,
-                        "category": str(r.get("category", "")),
-                        "topic": str(r.get("topic", "")),
-                        "question": str(r.get("question", "")),
-                        "choices": choices,
-                        "answer": str(r.get("answer", "")),
-                        "explanation": str(r.get("explanation", "")),
-                        "attachments": [],
-                    })
+                if st.button("Import Questions", type="primary"):
+                    questions_imported = 0
+                    for _, r in df.iterrows():
+                        # Extract any column starting with 'choice'
+                        choices = [
+                            str(r[c])
+                            for c in df.columns
+                            if str(c).lower().startswith("choice")
+                            and pd.notna(r[c])
+                        ]
+                        
+                        # Basic Validation
+                        if not r.get("question") or not r.get("answer"):
+                            continue
+                        
+                        questions_imported += 1
+                        bank.append({
+                            "qid": uuid.uuid4().hex[:10],
+                            "id_num": len(bank) + 1,
+                            "category": str(r.get("category", "")),
+                            "topic": str(r.get("topic", "")),
+                            "question": str(r.get("question", "")),
+                            "choices": choices,
+                            "answer": str(r.get("answer", "")),
+                            "explanation": str(r.get("explanation", "")),
+                            "attachments": [],
+                        })
 
-                save_bank(bank)
-                st.success(f"Imported **{questions_imported}** questions successfully!")
-                st.balloons()
-        except Exception as e:
-            st.error(f"Error reading file: {e}")
+                    save_bank(bank)
+                    st.success(f"Imported **{questions_imported}** questions successfully!")
+                    st.balloons()
+            except Exception as e:
+                st.error(f"Error reading file: {e}")
 
-    # =========================
-    # EXPORT DATA
-    # =========================
-    st.markdown("---")
-    st.markdown("### 📥 Export Data")
+        # =========================
+        # EXPORT DATA
+        # =========================
+        st.markdown("---")
+        st.markdown("### 📥 Export Data")
 
-    col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-    with col1:
-        if bank:
-            qb_rows = []
-            for q in bank:
-                row = {
-                    "id": q["id_num"],
-                    "category": q.get("category", ""),
-                    "topic": q.get("topic", ""),
-                    "question": q["question"],
-                    "answer": q["answer"],
-                    "explanation": q.get("explanation", ""),
-                }
-                for i, c in enumerate(q["choices"], start=1):
-                    row[f"choice{i}"] = c
-                qb_rows.append(row)
+        with col1:
+            if bank:
+                qb_rows = []
+                for q in bank:
+                    row = {
+                        "id": q["id_num"],
+                        "category": q.get("category", ""),
+                        "topic": q.get("topic", ""),
+                        "question": q["question"],
+                        "answer": q["answer"],
+                        "explanation": q.get("explanation", ""),
+                    }
+                    for i, c in enumerate(q["choices"], start=1):
+                        row[f"choice{i}"] = c
+                    qb_rows.append(row)
 
-            qb_df = pd.DataFrame(qb_rows)
-            
-            st.download_button(
-                label="📘 Download Question Bank (Excel)",
-                data=to_excel_bytes(qb_df),
-                file_name="question_bank_backup.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
-        else:
-            st.info("No questions to export.")
+                qb_df = pd.DataFrame(qb_rows)
+                
+                st.download_button(
+                    label="📘 Download Question Bank (Excel)",
+                    data=to_excel_bytes(qb_df),
+                    file_name="question_bank_backup.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            else:
+                st.info("No questions to export.")
 
-    with col2:
-        if stats["attempts"]:
-            results_df = pd.DataFrame(stats["attempts"])
+        with col2:
+            if stats["attempts"]:
+                results_df = pd.DataFrame(stats["attempts"])
 
-            # 1. Create a clean mapping dictionary for all necessary details
-            qid_to_details = {}
-            for q in bank:
-                qid_to_details[q['qid']] = {
-                    "id_num": q.get("id_num", "N/A"),
-                    "category": q.get('category', 'N/A'),
-                    "topic": q.get('topic', 'N/A')
-                }
-            
-            # 2. Apply mapping robustly, ensuring default 'N/A' if QID is missing
-            results_df["question_id"] = results_df["qid"].apply(
-                lambda x: qid_to_details.get(x, {}).get("id_num", "N/A")
-            )
-            results_df['Category'] = results_df['qid'].apply(
-                lambda x: qid_to_details.get(x, {}).get("category", "N/A")
-            )
-            results_df['Topic'] = results_df['qid'].apply(
-                lambda x: qid_to_details.get(x, {}).get("topic", "N/A")
-            )
+                # 1. Create a clean mapping dictionary for all necessary details
+                qid_to_details = {}
+                for q in bank:
+                    qid_to_details[q['qid']] = {
+                        "id_num": q.get("id_num", "N/A"),
+                        "category": q.get('category', 'N/A'),
+                        "topic": q.get('topic', 'N/A')
+                    }
+                
+                # 2. Apply mapping robustly, ensuring default 'N/A' if QID is missing
+                results_df["question_id"] = results_df["qid"].apply(
+                    lambda x: qid_to_details.get(x, {}).get("id_num", "N/A")
+                )
+                results_df['Category'] = results_df['qid'].apply(
+                    lambda x: qid_to_details.get(x, {}).get("category", "N/A")
+                )
+                results_df['Topic'] = results_df['qid'].apply(
+                    lambda x: qid_to_details.get(x, {}).get("topic", "N/A")
+                )
 
-            # Reorder columns for better readability in Excel
-            final_columns = [
-                'question_id', 'Category', 'Topic', 'correct', 'ts', 'qid'
-            ]
-            results_df = results_df.reindex(columns=final_columns)
+                # Reorder columns for better readability in Excel
+                final_columns = [
+                    'question_id', 'Category', 'Topic', 'correct', 'ts', 'qid'
+                ]
+                results_df = results_df.reindex(columns=final_columns)
 
-            st.download_button(
-                label="📊 Download Quiz Results (Excel)",
-                data=to_excel_bytes(results_df),
-                file_name="quiz_results_backup.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
-        else:
-            st.info("No quiz attempts yet.")
+                st.download_button(
+                    label="📊 Download Quiz Results (Excel)",
+                    data=to_excel_bytes(results_df),
+                    file_name="quiz_results_backup.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            else:
+                st.info("No quiz attempts yet.")
