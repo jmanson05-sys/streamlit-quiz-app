@@ -173,6 +173,7 @@ def build_adaptive_pool(bank, stats):
 if page == "Quiz":
     st.subheader("Quiz Builder")
     qz = st.session_state.quiz
+    builder_disabled = qz["active"]
 
     quiz_mode = st.radio(
         "Quiz mode",
@@ -186,14 +187,14 @@ if page == "Quiz":
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
-        cat = st.selectbox("Category", ["All"] + categories)
+        cat = st.selectbox("Category", ["All"] + categories, disabled=builder_disabled)
 
     with c2:
-        topic = st.selectbox("Topic", ["All"] + topics)
+        topic = st.selectbox("Topic", ["All"] + topics, disabled=builder_disabled)
 
     with c3:
         status = st.selectbox(
-            "Status", ["All", "Correct", "Incorrect", "Unanswered"]
+            "Status", ["All", "Correct", "Incorrect", "Unanswered"], disabled=builder_disabled
         )
 
     with c4:
@@ -201,9 +202,9 @@ if page == "Quiz":
             "Number of questions",
             min_value=1,
             max_value=max(1, len(bank)),
-            value=min(10, max(1, len(bank))),
+            value=min(10, max(1, len(bank))), disabled=builder_disabled)
         )
-    if st.button("Start quiz", type="primary"):
+    if st.button("Start quiz", type="primary", disabled=qz["active"]):
         import random
 
         if quiz_mode.startswith("🎯"):
