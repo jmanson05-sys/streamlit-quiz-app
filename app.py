@@ -314,23 +314,17 @@ if page == "Quiz":
                 if not question_text:
                     st.error("⚠️ This question has no stem text.")
                 else:
-                    st.markdown(
-                        f"""
-                        <div style="
-                            background-color: white;
-                            padding: 24px;
-                            border-radius: 8px;
-                            border: 1px solid #e0e0e0;
-                            font-size: 18px;
-                            line-height: 1.6;
-                            margin-bottom: 16px;
-                        ">
-                            <strong>Question {idx + 1}</strong><br><br>
-                            {question_text}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                    st.markdown("### Question Debug")
+                    
+                    st.write("RAW question value:", repr(q.get("question")))
+                    
+                    question_text = (q.get("question") or "").strip()
+                    
+                    if not question_text:
+                        st.error("❌ Question text is empty or invalid")
+                    else:
+                        st.write(question_text)
+
 
 
                 # =========================
