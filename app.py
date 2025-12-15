@@ -239,6 +239,8 @@ if page == "Quiz":
         # 🚧 HARD GUARD — no blank screen
         if len(pool) == 0:
             st.warning("No questions match your filters. Try changing category, topic, or status.")
+            qz["active"] = False
+            st.stop()
         
         random.shuffle(pool)
         pool = pool[:n]
