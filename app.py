@@ -289,169 +289,124 @@ if page == "Quiz":
                 st.rerun()
         
         else:
-            if idx >= len(qz["pool"]):
-                qz["active"] = False
-                st.rerun()
+    q = qz["pool"][idx]
+    qid = q["qid"]
 
-           with main_col:
-    # =========================
-    # QUESTION STEM
-    # =========================
-    st.markdown(
-        f"""
-        <div style="
-            background-color: white;
-            padding: 28px;
-            border-radius: 10px;
-            border: 1px solid #e0e0e0;
-            font-size: 18px;
-            line-height: 1.6;
-            margin-bottom: 24px;
-        ">
-            <strong>Question {idx + 1}</strong><br><br>
-            {q["question"]}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    answered = qid in stats["user_answers"]
+    user_answer = stats["user_answers"].get(qid)
+    correct_answer = q["answer"]
 
     # =========================
-    # ANSWERS
+    # MAIN QUESTION PANEL
     # =========================
-    if qid not in qz["choice_order"]:
-        import random
-        opts = q["choices"].copy()
-        random.shuffle(opts)
-        qz["choice_order"][qid] = opts
-
-    if not answered:
-        sel = st.radio(
-            "",
-            qz["choice_order"][qid],
-            index=None,
-            label_visibility="collapsed"
+    with main_col:
+        st.markdown(
+            f"""
+            <div style="
+                background-color: white;
+                padding: 28px;
+                border-radius: 10px;
+                border: 1px solid #e0e0e0;
+                font-size: 18px;
+                line-height: 1.6;
+                margin-bottom: 24px;
+            ">
+                <strong>Question {idx + 1}</strong><br><br>
+                {q["question"]}
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-        if st.button("Submit Answer", type="primary", disabled=sel is None):
-            stats["user_answers"][qid] = sel
-            stats["attempts"].append(
-                {
-                    "qid": qid,
-                    "correct": sel == correct_answer,
-                    "ts": datetime.utcnow().isoformat(),
-                }
+        if qid not in qz["choice_order"]:
+            import random
+            opts = q["choices"].copy()
+            random.shuffle(opts)
+            qz["choice_order"][qid] = opts
+
+        if not answered:
+            sel = st.radio(
+                "",
+                qz["choice_order"][qid],
+                index=None,
+                label_visibility="collapsed"
             )
-            save_stats(stats)
 
-            if sel == correct_answer:
-                qz["score"] += 1
-            qz["show_expl"] = True
-            st.rerun()
+            if st.button("Submit Answer", type="primary", disabled=sel is None):
+                stats["user_answers"][qid] = sel
+                stats["attempts"].append(
+                    {
+                        "qid": qid,
+                        "correct": sel == correct_answer,
+                        "ts": datetime.utcnow().isoformat(),
+                    }
+                )
+                save_stats(stats)
 
-                # =========================
-                # ANSWER STATE
-                # =========================
-                answered = qid in stats["user_answers"]
-                user_answer = stats["user_answers"].get(qid)
-                correct_answer = q["answer"]
+                if sel == correct_answer:
+                    qz["score"] += 1
+                qz["show_expl"] = True
+                st.rerun()
 
-                # =========================
-                # SHUFFLE CHOICES (ONCE)
-                # =========================
-                if qid not in qz["choice_order"]:
-                    import random
-                    opts = q["choices"].copy()
-                    random.shuffle(opts)
-                    qz["choice_order"][qid] = opts
-
-                # =========================
-                # BEFORE SUBMIT
-                # =========================
-                if not answered:
-                    sel = st.radio(
-                        "",
-                        qz["choice_order"][qid],
-                        index=None,
-                        label_visibility="collapsed"
-                    )
-
-                    if st.button("Submit Answer", type="primary", disabled=sel is None):
-                        stats["user_answers"][qid] = sel
-                        stats["attempts"].append(
-                            {
-                                "qid": qid,
-                                "correct": sel == correct_answer,
-                                "ts": datetime.utcnow().isoformat(),
-                            }
-                        )
-                        save_stats(stats)
-                        
-                        if sel == correct_answer:
-                            qz["score"] += 1
-                        qz["show_expl"] = True
-                        st.rerun()
-
-                # =========================
-                # AFTER SUBMIT (UWORLD STYLE)
-                # =========================
+        else:
+            for i, opt in enumerate(qz["choice_order"][qid]):
+                label = chr(65 + i)
+                if opt == correct_answer:
+                    bg, border = "#e8f5e9", "#2e7d32"
+                elif opt == user_answer:
+                    bg, border = "#fdecea", "#c62828"
                 else:
-                    for i, opt in enumerate(qz["choice_order"][qid]):
-                        label = chr(65 + i)  # A, B, C, D
-                        
-                        if opt == correct_answer:
-                            bg = "#e8f5e9"
-                            border = "#2e7d32"
-                        elif opt == user_answer:
-                            bg = "#fdecea"
-                            border = "#c62828"
-                        else:
-                            bg = "#f7f7f7"
-                            border = "#ccc"
-                         
-                        st.markdown(
-                            f"""
-                            <div style="
-                                padding: 12px 16px;
-                                margin-bottom: 10px;
-                                border-radius: 6px;
-                                border: 2px solid {border};
-                                background-color: {bg};
-                                font-size: 16px;
-                            ">
-                                <strong>{label}.</strong> {opt}
-                            </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
+                    bg, border = "#f7f7f7", "#ccc"
 
-                # =========================
-                # EXPLANATION
-                # =========================
-                if qz["show_expl"]:
-                    correct = user_answer == correct_answer
-                    st.markdown(
-                        f"""
-                        <div style="
-                            background-color: {'#e8f5e9' if correct else '#fdecea'};
-                            padding: 20px;
-                            border-radius: 8px;
-                            margin-top: 20px;
-                            border: 1px solid #ccc;
-                        ">
-                            <strong>{'Correct' if correct else 'Incorrect'}</strong><br><br>
-                            <strong>Correct Answer:</strong> {correct_answer}<br><br>
-                            {q.get("explanation", "")}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                st.markdown(
+                    f"""
+                    <div style="
+                        padding: 12px 16px;
+                        margin-bottom: 10px;
+                        border-radius: 6px;
+                        border: 2px solid {border};
+                        background-color: {bg};
+                        font-size: 16px;
+                    ">
+                        <strong>{label}.</strong> {opt}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-            with side_col:
-                if qz["show_expl"] and st.button("Next Question ➡️"):
-                    qz["index"] += 1
-                    qz["show_expl"] = False
-                    st.rerun()
-                    qz["choice_order"].pop(qid, None)
+        if qz["show_expl"]:
+            correct = user_answer == correct_answer
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: {'#e8f5e9' if correct else '#fdecea'};
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin-top: 20px;
+                    border: 1px solid #ccc;
+                ">
+                    <strong>{'Correct' if correct else 'Incorrect'}</strong><br><br>
+                    <strong>Correct Answer:</strong> {correct_answer}<br><br>
+                    {q.get("explanation", "")}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    # =========================
+    # SIDE PANEL
+    # =========================
+    with side_col:
+        st.markdown("### Progress")
+        st.progress((idx + 1) / total)
+        st.caption(f"Question {idx + 1} of {total}")
+        st.caption(f"Score: {qz['score']}")
+
+        if qz["show_expl"] and st.button("Next Question ➡️"):
+            qz["index"] += 1
+            qz["show_expl"] = False
+            qz["choice_order"].pop(qid, None)
+            st.rerun()
 
 # =========================================================
 # REVIEW
