@@ -203,29 +203,28 @@ if page == "Quiz":
             max_value=max(1, len(bank)),
             value=min(10, max(1, len(bank))),
         )
-
     if st.button("Start quiz", type="primary"):
         import random
 
-   if quiz_mode.startswith("🎯"):
-        pool = build_adaptive_pool(bank, stats)
-   else:
-        pool = build_standard_pool(bank, cat, topic, status)
-
+        if quiz_mode.startswith("🎯"):
+            pool = build_adaptive_pool(bank, stats)
+        else:
+            pool = build_standard_pool(bank, cat, topic, status)
 
         random.shuffle(pool)
         pool = pool[:n]
 
-        st.session_state.quiz = {
-            "active": True,
-            "pool": pool,
-            "index": 0,
-            "score": 0,
-            "show_expl": False,
-            "choice_order": {},
-        }
+        qz["active"] = True
+        qz["pool"] = pool
+        qz["index"] = 0
+        qz["score"] = 0
+        qz[show_expl"] = False
+        qz["choice_order"] = {}
+
         st.rerun()
 
+        random.shuffle(pool)
+        pool = pool[:n]
 
     qz = st.session_state.quiz
 
